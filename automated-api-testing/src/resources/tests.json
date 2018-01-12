@@ -1,0 +1,51 @@
+{
+	"proxy":
+		{
+			"address": "127.0.0.1",
+			"port": "5016"
+		},
+	"variables": [
+		{
+			"w_base": "http://192.168.100.100:8080/rest/",
+		 	"n_base": "http://idm.example.com/admin/"
+		}
+	],
+        "tests": [
+                {
+			"include": "login.json"
+                },{
+		// TEST CASE 1
+		// ===========
+			"include": "createIdentity.json",
+			"includeName": "createIdentity1",
+		        "staticVariables" : [{
+		                "c_createIdentity_LoginID": "testl001"
+		        },{
+		                "c_createIdentity_Email": "erika.mueller1@example.com"
+			}]
+		},{
+			"include": "createIdentity_chk_1.json",
+			"includeName": "createIdentity_1_chk_1"
+
+		},{
+			"include": "createIdentity_chk_2.json",
+			"includeName": "createIdentity_1_chk_2"
+		},{
+		// TEST CASE 2
+		// ===========
+			"include": "createIdentity.json",
+			"includeName": "createIdentity2",
+		        "staticVariables" : [{
+		                "c_createIdentity_LoginID": "testl002"
+		        },{
+		                "c_createIdentity_Email": "erika.mueller2@example.com"
+			}]
+		},{
+			"include": "createIdentity_chk_1.json",
+			"includeName": "createIdentity_2_chk_1"
+
+		},{
+			"include": "createIdentity_chk_2.json",
+			"includeName": "createIdentity_2_chk_2"
+		}
+}
