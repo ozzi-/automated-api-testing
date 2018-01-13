@@ -111,8 +111,8 @@ This example will get the json value of "idNumber" and "initialPassword" from th
 	"call": "%%<w_base>%%createIdentity/",
 	"method": "POST",
 	"responsecode": 200,
-  . . .
-  "variables" : [{
+  	. . .
+ 	"variables" : [{
 		"c_IdNumber": "\"IdNumber\":\"(.*?)\"" 
 	},{
 		"c_InitialPassword": "\"initialPassword\":\"(.*?)\"" 
@@ -139,8 +139,8 @@ Example in the test case:
 ```
 {
 	"name": "createIdentity",
-  "call": "%%<w_base>%%createIdentity/%%<c_createIdentity_LoginID>%%",
-  . . .
+	"call": "%%<w_base>%%createIdentity/%%<c_createIdentity_LoginID>%%",
+	. . .
 }
 ```
 Note: When trying to access an undefined variable, an according error message is displayed.
@@ -155,9 +155,9 @@ POST http://192.168.100.100:8080/rest/createIdentity/
 
 Body:
 {
- 	"login": "testl001",
-  . . .
-  "more": "json"
+	"login": "testl001",
+	. . .
+	"more": "json"
 }
 
 Result:
