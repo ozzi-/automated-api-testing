@@ -91,11 +91,11 @@ Static variaibles can also be defined in the test case itself as such:
 {
 	"name": "createIdentity",
 	"call": "%%<w_base>%%createIdentity/",
-  . . . 
+	. . . 
 	"variables" : [{
-    "c_createIdentity_LoginID": "%%static%%testl002"
-  },{
-    "c_createIdentity_Email": "%%static%%erika.mueller2@example.com"
+		"c_createIdentity_LoginID": "%%static%%testl002"
+	},{
+		"c_createIdentity_Email": "%%static%%erika.mueller2@example.com"
 	}]
 }
 ```
