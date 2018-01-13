@@ -64,14 +64,12 @@ Global variables can be defined in tests.json, they are available in all test ca
 However they still may be overwritten.
 ```
 {
-  . . .
-  "variables": [
-  		{
-  			"w_base": "http://192.168.100.100:8080/rest/",
-  		 	"n_base": "http://idm.example.com/admin/"
-      }
-   ],
-   . . . 
+	. . .
+	"variables": [{
+		"w_base": "http://192.168.100.100:8080/rest/",
+		"n_base": "http://idm.example.com/admin/"
+	}],
+  	 . . . 
 }
 ```
 ### Static variables
