@@ -93,7 +93,7 @@ public class TestCase {
 				}else{
 					String ebody="empty";
 					if(response!=null) {
-						response.getBody();
+						ebody=response.getBody();
 					}
 					return new TestResult("Exception: "+e.getMessage(),ebody);
 				}
