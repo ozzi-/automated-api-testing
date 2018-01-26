@@ -75,6 +75,7 @@ public class Variables {
 		for (String match : list) {
 			String value = variables.get(match);
 			if(value!=null){
+				value = value.replace(staticKeyword, "");
 				strng=strng.replace("%%<"+match+">%%",value);				
 			}else if(checkExistence){
 				System.err.println("Undeclared variable "+match);
