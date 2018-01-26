@@ -22,7 +22,8 @@ public class Testing {
 		for (TestCase testCase : testCases) {
 			long exStart = System.nanoTime();
 			// Start
-			testCase.injectVars(Variables.variables,false);			
+			testCase.injectVars(testCase.getCustomVars(),true); 
+			testCase.injectVars(Variables.variables,false);
 			TestResult res = testCase.test();
 			// End
 			long exEnd = System.nanoTime();
