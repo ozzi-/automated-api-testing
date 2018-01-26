@@ -91,7 +91,11 @@ public class TestCase {
 					int end = start+3;
 					response = new NWResponse(Integer.valueOf(e.getMessage().substring(start, end)),"");
 				}else{
-					return new TestResult("Exception: "+e.getMessage(),response.getBody());
+					String ebody="empty";
+					if(response!=null) {
+						response.getBody();
+					}
+					return new TestResult("Exception: "+e.getMessage(),ebody);
 				}
 			}		
 		}
