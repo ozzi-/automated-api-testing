@@ -109,7 +109,7 @@ public class Variables {
 		}
 		if(setVar){
 			for (TestCase testCaseTC : testCases) {
-				testCaseTC.injectVars(variables,true);
+				testCaseTC.injectVariables(variables,true);
 			}				
 		}
 	}

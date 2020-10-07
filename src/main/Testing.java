@@ -22,9 +22,9 @@ public class Testing {
 		for (TestCase testCase : testCases) {
 			long exStart = System.nanoTime();
 			// Start
-			testCase.injectVars(testCase.getCustomVars(),true); 
-			testCase.injectVars(Variables.variables,false);
-			TestResult res = testCase.test();
+			testCase.injectVariables(testCase.getCustomVars(),true); 
+			testCase.injectVariables(Variables.variables,false);
+			TestResult res = testCase.runTest();
 			// End
 			long exEnd = System.nanoTime();
 			long exTot = (exEnd-exStart)/1000/1000;
@@ -35,7 +35,7 @@ public class Testing {
 			System.out.println(resString);
 			
 			Variables.resolveTestCaseCustomVariables(Variables.variables, testCases, testCase, res);
-	        Helpers.writeResult(testCase, res, resString);
+	        Helpers.writeTestCaseResult(testCase, res, resString);
 		}
 		System.out.println("\nDone");
 	}

@@ -1,10 +1,10 @@
 package nw;
 
-public class NWResponse {
+public class HTTPResponse {
 	private int responseCode;
 	private String body;
 	
-	public NWResponse(int responseCode, String body) {
+	public HTTPResponse(int responseCode, String body) {
 		this.setResponseCode(responseCode);
 		this.setBody(body);
 	}

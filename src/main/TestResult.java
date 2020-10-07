@@ -10,11 +10,11 @@ public class TestResult {
 	private String body;
 
 	public TestResult(boolean codeMatches, boolean contains, int responseCode, int expectedResponseCode, String body) {
-		this.codeMatches	= codeMatches;
-		this.contains		= contains;
-		this.responseCode	= responseCode;
+		this.codeMatches = codeMatches;
+		this.contains = contains;
+		this.responseCode = responseCode;
 		this.expectedResponseCode = expectedResponseCode;
-		this.body 			= body;
+		this.body = body;
 	}
 	
 	public TestResult(String error, String body) {
@@ -27,7 +27,7 @@ public class TestResult {
 	}
 	
 	public boolean succeeded(){
-		return (error==null&&codeMatches&&contains);
+		return (error==null && codeMatches && contains);
 	}
 	
 	public String getFailReason(){
@@ -40,6 +40,6 @@ public class TestResult {
 		if(!contains){
 			return "Does not contain specified string "+error;
 		}
-		return "None";
+		return "No failure";
 	}
 }

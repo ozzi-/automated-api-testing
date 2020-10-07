@@ -6,71 +6,77 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
-public class NW {
-	public static ProxyConfig pc;
+public class Network {
+	
+	static ProxyConfig pc;
 
-	public static NWResponse doGet(String getURL) throws MalformedURLException,IOException{
+	private Network() {
+		throw new IllegalStateException("Utility class");
+	}
 
+	public static HTTPResponse doGet(String getURL) throws IOException {
 		StringBuilder result = new StringBuilder();
 		URL url = new URL(getURL);
 		HttpURLConnection conn;
-		if(pc!=null){
-			conn = (HttpURLConnection) url.openConnection(pc.getProxy());			
-		}else{
+
+		if (pc != null) {
+			conn = (HttpURLConnection) url.openConnection(pc.getProxy());
+		} else {
 			conn = (HttpURLConnection) url.openConnection();
 		}
-		conn.setRequestMethod(Method.GET);
+
+		conn.setRequestMethod(HTTPMethod.GET);
 		BufferedReader rd;
 		String line;
 		rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 		while ((line = rd.readLine()) != null) {
 			result.append(line);
 		}
-        int responseCode = conn.getResponseCode(); 
-        conn.disconnect();
-        
-        return new NWResponse(responseCode, result.toString());
+		int responseCode = conn.getResponseCode();
+		conn.disconnect();
+
+		return new HTTPResponse(responseCode, result.toString());
 	}
-	
-	public static NWResponse doMethod(String postURL, String postBody, String contentType, String method) throws MalformedURLException,IOException{
-		
+
+	public static HTTPResponse doMethod(String postURL, String postBody, String contentType, String method) throws IOException {
 		StringBuilder result = new StringBuilder();
 		URL url = new URL(postURL);
 		HttpURLConnection conn;
-		if(pc!=null){
-			conn = (HttpURLConnection) url.openConnection(pc.getProxy());			
-		}else{
+		
+		if (pc != null) {
+			conn = (HttpURLConnection) url.openConnection(pc.getProxy());
+		} else {
 			conn = (HttpURLConnection) url.openConnection();
 		}
-		
+
 		conn.setRequestMethod(method);
-		if(contentType!=null){
-			conn.setRequestProperty("Content-Type", contentType);			
+		if (contentType != null) {
+			conn.setRequestProperty("Content-Type", contentType);
 		}
 		conn.setDoOutput(true);
-		if(postBody!=null){
+		if (postBody != null) {
 			OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
 			wr.write(postBody);
-			wr.flush();	
+			wr.flush();
 		}
+		
 		BufferedReader rd;
 		String line;
 		InputStream is;
-		try{
+		try {
 			is = conn.getInputStream();
-		}catch(Exception e){
+		} catch (Exception e) {
 			is = conn.getErrorStream();
 		}
 		rd = new BufferedReader(new InputStreamReader(is));
 		while ((line = rd.readLine()) != null) {
 			result.append(line);
 		}
-		int responseCode = conn.getResponseCode(); 
-        conn.disconnect();
-        
-        return new NWResponse(responseCode, result.toString());
+		int responseCode = conn.getResponseCode();
+		conn.disconnect();
+
+		return new HTTPResponse(responseCode, result.toString());
 	}
 }

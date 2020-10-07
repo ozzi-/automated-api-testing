@@ -3,13 +3,12 @@ package main;
 import java.util.Map;
 
 import helpers.Variables;
-import nw.Method;
-import nw.NW;
-import nw.NWResponse;
-
+import nw.HTTPMethod;
+import nw.Network;
+import nw.HTTPResponse;
 
 public class TestCase {
-	
+
 	private String name;
 	private String call;
 	private String method;
@@ -18,12 +17,12 @@ public class TestCase {
 	private String body;
 	private String contentType;
 	private Map<String, String> customVars;
-	
-	public TestCase(String name, String call, String method, String postBody, String contentType, int expectedResponseCode, 
-			String expectedResponseContains, Map<String, String> customVars) {
-		this.name	= name;
-		this.call 	= call;
-		this.method	= method;
+	private static final String KEYWORD_RESPONSE_CODE = "response code:";
+
+	public TestCase(String name, String call, String method, String postBody, String contentType, int expectedResponseCode, String expectedResponseContains, Map<String, String> customVars) {
+		this.name = name;
+		this.call = call;
+		this.method = method;
 		this.body = postBody;
 		this.contentType = contentType;
 		this.expectedResponseCode = expectedResponseCode;
@@ -31,95 +30,91 @@ public class TestCase {
 		this.customVars = customVars;
 	}
 
-	public void injectVars(Map<String, String> variables, boolean force){
-		name = Variables.injectVariables(variables, name,force);
-		call = Variables.injectVariables(variables, call,force);
-		if(body!=null){
-			body	= Variables.injectVariables(variables, body,force);			
+	public void injectVariables(Map<String, String> variables, boolean force) {
+		name = Variables.injectVariables(variables, name, force);
+		call = Variables.injectVariables(variables, call, force);
+		if (body != null) {
+			body = Variables.injectVariables(variables, body, force);
 		}
-		if(contentType!=null){
-			contentType	= Variables.injectVariables(variables, contentType,force);
+		if (contentType != null) {
+			contentType = Variables.injectVariables(variables, contentType, force);
 		}
-		if(expectedResponseContains!=null){
-			expectedResponseContains	= Variables.injectVariables(variables, expectedResponseContains,force);
+		if (expectedResponseContains != null) {
+			expectedResponseContains = Variables.injectVariables(variables, expectedResponseContains, force);
 		}
 	}
-	
-	public String getBody(){
-		return body;
-	}
-	
-	public String getCall(){
-		return call;
-	}
-	
-	public Map<String, String> getCustomVars(){
-		return customVars;
-	}
-	
-	public String getMethod(){
-		return method;
-	}
-	
-	public TestResult test(){
-		NWResponse response = null;
-		// Execution 
-		if(method.equals(Method.GET)){
+
+	public TestResult runTest() {
+		HTTPResponse response = null;
+		if (method.equals(HTTPMethod.GET)) {
 			try {
-				response = NW.doGet(call);
+				response = Network.doGet(call);
 			} catch (Exception e) {
-				if(e.getClass().getCanonicalName().equals("java.io.FileNotFoundException")){
-					response = new NWResponse(404,"");
-				}else{
-					String body = response==null || response.getBody()==null?"no body returned":response.getBody();
-					return new TestResult("Exception: "+e.getMessage(),body);
+				if (e.getClass().getCanonicalName().equals("java.io.FileNotFoundException")) {
+					response = new HTTPResponse(404, "");
+				} else {
+					String body = response.getBody() == null ? "no body returned" : response.getBody();
+					return new TestResult("Exception: " + e.getMessage(), body);
 				}
 			}
-		}else{
-			String responseCodeKeyword="response code:";
+		} else {
 			try {
-				response = NW.doMethod(call,body, contentType, method);
+				response = Network.doMethod(call, body, contentType, method);
 			} catch (Exception e) {
-				if(e.getClass().getCanonicalName().equals("java.net.ConnectException")) {
-					System.err.println(e.getMessage() +" "+call);
+				if (e.getClass().getCanonicalName().equals(java.net.ConnectException.class.getName())) {
+					System.err.println(e.getMessage() + " " + call);
 					System.exit(1);
 				}
-				if(e.getClass().getCanonicalName().equals("java.io.FileNotFoundException")){
-					response = new NWResponse(404,"");
-				}else if(e.getClass().getCanonicalName().equals("java.io.IOException") && e.getMessage().contains(responseCodeKeyword)){
-					int start = e.getMessage().indexOf(responseCodeKeyword)+responseCodeKeyword.length()+1; 
-					int end = start+3;
-					response = new NWResponse(Integer.valueOf(e.getMessage().substring(start, end)),"");
-				}else{
-					String ebody="empty";
-					if(response!=null) {
-						ebody=response.getBody();
+				if (e.getClass().getCanonicalName().equals(java.io.FileNotFoundException.class.getName())) {
+					response = new HTTPResponse(404, "");
+				} else if (e.getClass().getCanonicalName().equals(java.io.IOException.class.getName()) && e.getMessage().contains(KEYWORD_RESPONSE_CODE)) {
+					int start = e.getMessage().indexOf(KEYWORD_RESPONSE_CODE) + KEYWORD_RESPONSE_CODE.length() + 1;
+					response = new HTTPResponse(Integer.valueOf(e.getMessage().substring(start, start + 3)), "");
+				} else {
+					String ebody = "empty";
+					if (response != null) {
+						ebody = response.getBody();
 					}
-					return new TestResult("Exception: "+e.getMessage(),ebody);
-				}
-			}		
-		}
-		// Evaluation
-		boolean contains;
-		boolean code = (response.getResponseCode()==expectedResponseCode);
-		if(expectedResponseContains==null){
-			contains = true;
-		}else{
-			contains = true;
-			String[] expectedResponseContainsList = expectedResponseContains.split("<DELIMITER>");
-			for (String containsString : expectedResponseContainsList) {
-				boolean tempC = response.getBody().contains(containsString);
-				if(!tempC){
-					contains=false;
-					return new TestResult("Does not contain '"+containsString+"'",response.getBody());
+					return new TestResult("Exception: " + e.getMessage(), ebody);
 				}
 			}
 		}
-		return new TestResult(code, contains, response.getResponseCode(), expectedResponseCode, response.getBody());
+		return evaluateTestResponse(response);
+	}
+
+	private TestResult evaluateTestResponse(HTTPResponse response) {
+		boolean codeMatches = (response.getResponseCode() == expectedResponseCode);
+		if (expectedResponseContains != null) {
+			// TODO externalize string <DELIMITER>
+			String[] expectedResponseContainsList = expectedResponseContains.split("<DELIMITER>");
+			for (String containsString : expectedResponseContainsList) {
+				boolean bodyContains = response.getBody().contains(containsString);
+				if (!bodyContains) {
+					return new TestResult("Does not contain '" + containsString + "'", response.getBody());
+				}
+			}
+		}
+		return new TestResult(codeMatches, true, response.getResponseCode(), expectedResponseCode, response.getBody());
 	}
 
 	public String getName() {
 		return name;
 	}
-	
+
+	public String getBody() {
+		return body;
+	}
+
+	public String getCall() {
+		return call;
+	}
+
+	public Map<String, String> getCustomVars() {
+		return customVars;
+	}
+
+	public String getMethod() {
+		return method;
+	}
+
 }

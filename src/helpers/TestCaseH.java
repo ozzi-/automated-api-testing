@@ -12,24 +12,39 @@ import com.google.gson.JsonParser;
 
 import main.TestCase;
 import main.Testing;
-import nw.Method;
+import nw.HTTPMethod;
 
 public class TestCaseH {
+	
+	public static final String KEYWORD_TESTS = "tests";
+	public static final String KEYWORD_INCLUDE = "include";
+	public static final String KEYWORD_STATIC_VARS = "staticVariables";
+	public static final String KEYWORD_VARS = "variables";
+	public static final String KEYWORD_NAME = "name";
+	public static final String KEYWORD_INCLUDE_NAME = "includeName";
+	
+	public static final String KEYWORD_CALL = "call";
+	public static final String KEYWORD_METHOD = "method";
+	public static final String KEYWORD_BODY = "body";
+	public static final String KEYWORD_RESPONSE_CONTAINS = "responsecontains";
+	public static final String KEYWORD_RESPONSE_CODE = "responsecode";
+	public static final String KEYWORD_CONTENT_TYPE = "contenttype";
 	
 	/**
 	 * loads /tests.json, the initial start point for defining testcases and includes all referenced testcase files
 	 * @return testcases as json
 	 */
+	// TODO remove resource stream to externalized json to read from
 	public static JsonElement loadTestJSON() {
 		InputStream stream = Testing.class.getClass().getResourceAsStream("/resources/tests.json");
 		String testsJSONString = Helpers.convertStreamToString(stream);
 	    try {
 		    JsonElement testsJSON = new JsonParser().parse(testsJSONString);
-	    	JsonElement tests = testsJSON.getAsJsonObject().get("tests");
+	    	JsonElement tests = testsJSON.getAsJsonObject().get(KEYWORD_TESTS);
 	    	JsonArray testsArr = tests.getAsJsonArray().getAsJsonArray();
 	    	testsArr = resolveInclude(testsArr);
-	    	testsJSON.getAsJsonObject().remove("tests");
-	    	testsJSON.getAsJsonObject().add("tests",testsArr);
+	    	testsJSON.getAsJsonObject().remove(KEYWORD_TESTS);
+	    	testsJSON.getAsJsonObject().add(KEYWORD_TESTS,testsArr);
 		    return testsJSON;
 	    } catch (Exception e) {
 	    	System.err.println("Invalid JSON for tests array. "+e.getMessage()+" Exiting");
@@ -45,11 +60,11 @@ public class TestCaseH {
 	 */
 	private static JsonArray resolveInclude(JsonArray testsJSONArray) {
 		for (int i = 0; i < testsJSONArray.size(); i++) {
-			JsonElement test = testsJSONArray.get(i).getAsJsonObject().get("include");
+			JsonElement test = testsJSONArray.get(i).getAsJsonObject().get(KEYWORD_INCLUDE);
 			if(test!=null) {
 				String includeName = "Unknown - Array entry #"+i;
 				try {
-					includeName = (testsJSONArray.get(i).getAsJsonObject().get("include").getAsString());
+					includeName = (testsJSONArray.get(i).getAsJsonObject().get(KEYWORD_INCLUDE).getAsString());
 					InputStream streamInclude = Testing.class.getClass().getResourceAsStream("/resources/"+includeName);
 					String includeJSONString = Helpers.convertStreamToString(streamInclude);
 					JsonObject testJSON = (testsJSONArray.get(i).getAsJsonObject());
@@ -70,23 +85,23 @@ public class TestCaseH {
 	}
 
 	private static void mergeCustomName(JsonObject jobject, JsonElement jsonInclude) {
-		if(jobject.get("includeName")!=null) {
-			String includeTestName = jobject.get("includeName").getAsString();
-			jsonInclude.getAsJsonObject().remove("name");
-			jsonInclude.getAsJsonObject().addProperty("name", includeTestName);
+		if(jobject.get(KEYWORD_INCLUDE_NAME)!=null) {
+			String includeTestName = jobject.get(KEYWORD_INCLUDE_NAME).getAsString();
+			jsonInclude.getAsJsonObject().remove(KEYWORD_NAME);
+			jsonInclude.getAsJsonObject().addProperty(KEYWORD_NAME, includeTestName);
 		}
 	}
 
 	private static void mergeStaticVariablesWithTestCaseVariables(JsonObject staticVariablesJSONObj, JsonElement testCaseJSONElem) {
-		if(staticVariablesJSONObj.get("staticVariables")!=null){
-			JsonArray staticVariables = staticVariablesJSONObj.get("staticVariables").getAsJsonArray();
+		if(staticVariablesJSONObj.get(KEYWORD_STATIC_VARS)!=null){
+			JsonArray staticVariables = staticVariablesJSONObj.get(KEYWORD_STATIC_VARS).getAsJsonArray();
 			for (JsonElement jsonElement : staticVariables) {
 				String key = jsonElement.getAsJsonObject().keySet().toArray()[0].toString();
 				String value = Variables.staticKeyword+jsonElement.getAsJsonObject().get(key).getAsString();
 				JsonObject jsonObject = new JsonObject();
 				jsonObject.addProperty(key,value);
 				jsonElement = (JsonElement) jsonObject;
-				testCaseJSONElem.getAsJsonObject().get("variables").getAsJsonArray().add(jsonElement);					
+				testCaseJSONElem.getAsJsonObject().get(KEYWORD_VARS).getAsJsonArray().add(jsonElement);					
 			}
 		}
 	}
@@ -125,8 +140,8 @@ public class TestCaseH {
 		String res = "";
 		if (je == null) {
 			if (req) {
-				String testName = jo.get("name").getAsString() == null ? "unknown"
-						: jo.get("name").getAsString();
+				String testName = jo.get(KEYWORD_NAME).getAsString() == null ? "unknown"
+						: jo.get(KEYWORD_NAME).getAsString();
 				System.err.println("Error in tests.json at element nr. " + i
 						+ ", name " + testName + " due to missing value '"
 						+ value + "'");
@@ -157,29 +172,29 @@ public class TestCaseH {
 		HashSet<String> testNames = new HashSet<String>();
 		
 	    JsonObject  jobject = testsJSON.getAsJsonObject();
-	    JsonArray jarray = jobject.getAsJsonArray("tests");
+	    JsonArray jarray = jobject.getAsJsonArray(KEYWORD_TESTS);
 		ArrayList<TestCase> testCases = new ArrayList<TestCase>();
 		
 	    int i=0;
 	    for (JsonElement jsonElement : jarray) {
 	    	i++;
 	    	JsonObject jo = jsonElement.getAsJsonObject();
-	    	String name				= TestCaseH.getValue(jo,"name"				,true,i,variables);
+	    	String name				= TestCaseH.getValue(jo,KEYWORD_NAME ,true,i,variables);
 	    	if(!testNames.add(name)){
 	    		System.err.println("Duplicate test name '"+name+"' found. Please use unique test names.");
 	    	}
-	    	String call 			= TestCaseH.getValue(jo,"call"				,true,i,variables);
-	    	String method		 	= TestCaseH.getValue(jo,"method"				,true,i,variables);
-	    	if(!(method.equals(Method.GET)||method.equals(Method.DELETE)||method.equals(Method.POST)||method.equals(Method.PUT))){
+	    	String call 			= TestCaseH.getValue(jo,KEYWORD_CALL ,true,i,variables);
+	    	String method		 	= TestCaseH.getValue(jo,KEYWORD_METHOD ,true,i,variables);
+	    	if(!(method.equals(HTTPMethod.GET)||method.equals(HTTPMethod.DELETE)||method.equals(HTTPMethod.POST)||method.equals(HTTPMethod.PUT))){
 	    		System.err.println("Error in tests.json at element nr. "+i+". Unknown method "+method);
 	    	}
-	    	int responsecode 		= Integer.valueOf(TestCaseH.getValue(jo,"responsecode",true,i,variables));
-	    	String responsecontains	= TestCaseH.getValue(jo,"responsecontains"	,false,i,variables);
-	    	String bodyFile			= TestCaseH.getValue(jo,"body"				,false,i,variables);
+	    	int responsecode 		= Integer.parseInt(TestCaseH.getValue(jo,KEYWORD_RESPONSE_CODE ,true,i,variables));
+	    	String responsecontains	= TestCaseH.getValue(jo,KEYWORD_RESPONSE_CONTAINS ,false,i,variables);
+	    	String bodyFile			= TestCaseH.getValue(jo,KEYWORD_BODY ,false,i,variables);
 
 	    	Map<String, String> customVars = Variables.getValueVariables(jo);
 	    	
-	    	String contentType		= TestCaseH.getValue(jo,"contenttype"			,bodyFile!=null,i,variables);
+	    	String contentType		= TestCaseH.getValue(jo,KEYWORD_CONTENT_TYPE ,bodyFile!=null,i,variables);
 	    	String body				= null;
 	    	if(bodyFile != null){
 	    		try {

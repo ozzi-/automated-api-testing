@@ -12,7 +12,11 @@ import main.TestCase;
 import main.TestResult;
 
 public class Helpers {
-	
+
+	private Helpers() {
+		throw new IllegalStateException("Utility class");
+	}
+
 	public static String convertStreamToString(java.io.InputStream is) {
 		if (is == null) {
 			return "";
@@ -23,17 +27,18 @@ public class Helpers {
 		s.close();
 		return streamString;
 	}
-	
-	public static void writeResult(TestCase testCase, TestResult res, String resString) {
+
+	// TODO provide param where to log
+	public static void writeTestCaseResult(TestCase testCase, TestResult res, String resString) {
 		String dir = TestCase.class.getClass().getResource("/").getFile();
-		dir=dir.replace("target/classes/", "results/");
-		OutputStream os;
-		try {
-			String tCNFS = testCase.getName().replaceAll("[^a-zA-Z0-9]+","");
-			os = new FileOutputStream(dir + tCNFS +".txt");
-		    final PrintStream printStream = new PrintStream(os);
+		dir = dir.replace("target/classes/", "results/");
+		OutputStream os = null;
+		String tCNFS = testCase.getName().replaceAll("[^a-zA-Z0-9]+", "");
+		
+		try (PrintStream printStream = new PrintStream(os); ){
+			os = new FileOutputStream(dir + tCNFS + ".txt");
 			printStream.println("Method - Call:");
-			printStream.println(testCase.getMethod()+" "+testCase.getCall());
+			printStream.println(testCase.getMethod() + " " + testCase.getCall());
 			printStream.println("");
 			printStream.println("Body:");
 			printStream.println(testCase.getBody());
@@ -43,23 +48,28 @@ public class Helpers {
 			printStream.println("");
 			printStream.println("Result Body:");
 			printStream.println(res.getBody());
-		    printStream.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+		} finally {
+			if(os!=null) {
+				try {
+					os.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}		
+			}
 		}
 	}
-	
-	public static String getFile(String fileName) {
+
+	public static String readFileToString(String fileName) {
 		StringBuilder result = new StringBuilder("");
-		ClassLoader classLoader = Thread.currentThread()
-				.getContextClassLoader();
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		File file = new File(classLoader.getResource(fileName).getFile());
 		try (Scanner scanner = new Scanner(file)) {
 			while (scanner.hasNextLine()) {
 				String line = scanner.nextLine();
-				result.append(line).append("\n");
+				result.append(line).append(System.lineSeparator());
 			}
-			scanner.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
