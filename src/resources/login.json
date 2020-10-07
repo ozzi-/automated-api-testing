@@ -1,0 +1,8 @@
+{
+	"name": "login",
+	"call": "%%<n_base>%%?login",
+	"method": "POST",
+	"responsecode": 200,
+	"body": "login.json",
+	"contenttype": "application/x-www-form-urlencoded"
+}

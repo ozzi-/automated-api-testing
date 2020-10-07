@@ -1,0 +1,10 @@
+{
+	"name": "createIdentity_check_pt2",
+	"call": "%%<n_base>%%pme.do?profileId=%%<c_IdNumber>%%",
+	"method": "GET",
+	"responsecode": 200,
+	"responsecontains": [
+	"SelfAdmin","SoapTechAccess",
+	"value=\"erika.mueller@example.com\" maxlength=\"1000\" size=\"10\" class=\"wMax\" tabindex=\"2201\" type=\"text\""
+	]
+}

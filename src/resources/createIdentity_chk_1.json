@@ -1,0 +1,15 @@
+{
+	"name": "createIdentity_check_pt1",
+	"call": "%%<n_base>%%uem.do?userId=%%<c_IdNumber>%%",
+	"method": "GET",
+	"responsecode": 200,
+	"responsecontains": [
+		"selected>NEW</option>",
+		"%%<c_IdNumber>%%",
+		"%%<c_InitialPassword>%%",
+		"%%<c_createIdentity_LoginID>%%",
+		">Person</option>",
+		"<option value=\"1013\" selected=\"\">0</option>",
+		"<option value=\"213\" selected=\"selected\">Schweiz</option>"
+	]
+}
