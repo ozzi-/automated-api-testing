@@ -26,9 +26,9 @@ public class ProxyConfig {
 	
 	public static void loadProxy(JsonElement testsJSON) {
 		CookieHandler.setDefault( new CookieManager( null, CookiePolicy.ACCEPT_ALL ) );
-	    JsonElement jap = testsJSON.getAsJsonObject().get(Keywords.PROXY);
-	    if(jap!=null){
-	    	Network.pc = new ProxyConfig(jap.getAsJsonObject().get(Keywords.ADDRESS).getAsString(), jap.getAsJsonObject().get(Keywords.PORT).getAsInt());
+	    JsonElement proxyJE = testsJSON.getAsJsonObject().get(Keywords.PROXY);
+	    if(proxyJE!=null){
+	    	Network.pc = new ProxyConfig(proxyJE.getAsJsonObject().get(Keywords.ADDRESS).getAsString(), proxyJE.getAsJsonObject().get(Keywords.PORT).getAsInt());
 	    }
 	}
 }

@@ -39,6 +39,7 @@ public class TestResult {
 		}
 		if(!contains){
 			return "Does not contain specified string "+error;
+			
 		}
 		return "No failure";
 	}

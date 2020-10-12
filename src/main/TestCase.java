@@ -92,6 +92,7 @@ public class TestCase {
 			for (String containsString : expectedResponseContainsList) {
 				boolean bodyContains = response.getBody().contains(containsString);
 				if (!bodyContains) {
+					VerbosePrinter.output(response.getBody());
 					return new TestResult("Does not contain '" + containsString + "'", response.getBody());
 				}
 			}

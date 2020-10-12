@@ -1,6 +1,5 @@
 package helpers;
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -11,24 +10,29 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import main.TestCase;
-import main.Testing;
 
 public class TestCaseHelpers { 
 	
+	/**
+	 * loads test json from file path and any includes into a JSON object 
+	 * @param testFilePath
+	 */
 	public static JsonElement loadTestJSONFile(String testFilePath) {
 	    try {
+	    	String basePath = Helpers.getBasePath(testFilePath);	
 	    	String testsJSONString = Helpers.readFileToString(testFilePath);		
 		    JsonElement testsJSON = new JsonParser().parse(testsJSONString);
 		    
 	    	JsonElement tests = testsJSON.getAsJsonObject().get(Keywords.TESTS);
 	    	JsonArray testsArr = tests.getAsJsonArray().getAsJsonArray();
 	    	// resolve includes and swap in json
-	    	testsArr = resolveInclude(testsArr);	    	
+	    	testsArr = resolveInclude(testsArr, basePath);	    	
 	    	testsJSON.getAsJsonObject().remove(Keywords.TESTS);
 	    	testsJSON.getAsJsonObject().add(Keywords.TESTS,testsArr);
 		    return testsJSON;
 	    } catch (Exception e) {
 	    	System.err.println("Error parsing test json file '"+testFilePath+"': "+e.getMessage()+" - "+e.getClass().getName());
+	    	e.printStackTrace();
 	    	System.exit(-1);
 	    }
 	    return null;
@@ -39,7 +43,7 @@ public class TestCaseHelpers {
 	 * @param testsJSONArray
 	 * @return
 	 */
-	private static JsonArray resolveInclude(JsonArray testsJSONArray) {
+	private static JsonArray resolveInclude(JsonArray testsJSONArray, String basePath) {
 		for (int i = 0; i < testsJSONArray.size(); i++) {
 			JsonElement test = testsJSONArray.get(i).getAsJsonObject().get(Keywords.INCLUDE);
 			if(test!=null) {
@@ -47,10 +51,13 @@ public class TestCaseHelpers {
 				try {
 					includeName = (testsJSONArray.get(i).getAsJsonObject().get(Keywords.INCLUDE).getAsString());
 					VerbosePrinter.output("Resolved include '"+includeName+"'");
-					InputStream streamInclude = Testing.class.getClass().getResourceAsStream("/resources/"+includeName);
-					String includeJSONString = Helpers.convertStreamToString(streamInclude);
-					JsonObject testJSON = (testsJSONArray.get(i).getAsJsonObject());
+					String includeJSONString = Helpers.readFileToString(basePath+includeName);
+					if(includeJSONString.length()==0) {
+						throw new Exception("Include "+includeName+" is an empty file");
+					}
 					JsonElement includeJSON = new JsonParser().parse(includeJSONString);
+						
+					JsonObject testJSON = (testsJSONArray.get(i).getAsJsonObject());
 					
 			    	mergeCustomName(testJSON, includeJSON);
 			    	mergeStaticVariablesWithTestCaseVariables(testJSON, includeJSON);
@@ -59,7 +66,9 @@ public class TestCaseHelpers {
 					testsJSONArray = JSONArrayInsert(i, includeJSON, testsJSONArray);
 					
 				}catch(Exception e){
-					System.err.println("Error including "+includeName+": "+e.getMessage());
+					System.err.println("Failed to include "+includeName+": "+e.getMessage()+" - "+e.getClass().getName());
+					e.printStackTrace();
+					System.exit(-1);
 				}
 			}
 		}
@@ -67,10 +76,16 @@ public class TestCaseHelpers {
 	}
 
 	private static void mergeCustomName(JsonObject jobject, JsonElement jsonInclude) {
-		if(jobject.get(Keywords.INCLUDE_NAME)!=null) {
-			String includeTestName = jobject.get(Keywords.INCLUDE_NAME).getAsString();
-			jsonInclude.getAsJsonObject().remove(Keywords.NAME);
-			jsonInclude.getAsJsonObject().addProperty(Keywords.NAME, includeTestName);
+		try {
+			if(jobject.get(Keywords.INCLUDE_NAME)!=null) {
+				String includeTestName = jobject.get(Keywords.INCLUDE_NAME).getAsString();
+				jsonInclude.getAsJsonObject().remove(Keywords.NAME);
+				jsonInclude.getAsJsonObject().addProperty(Keywords.NAME, includeTestName);
+			}			
+		}catch (Exception e) {
+			System.err.println("Error merging included test into main test file: "+e.getMessage()+" - "+e.getClass().getName());
+			e.printStackTrace();
+			System.exit(-1);
 		}
 	}
 
@@ -168,9 +183,8 @@ public class TestCaseHelpers {
 	    	}
 	    	String call 			= TestCaseHelpers.getValue(jo,Keywords.CALL ,true,i,variables);
 	    	String method		 	= TestCaseHelpers.getValue(jo,Keywords.METHOD ,true,i,variables);
-	    	if(!(method.equals(Keywords.HTTPGET)||method.equals(Keywords.HTTPDELETE)||method.equals(Keywords.HTTPPOST)||method.equals(Keywords.HTTPPUT))){
-	    		System.err.println("Error in tests json at element nr. "+i+". Unknown method "+method);
-	    	}
+	    	validateMethod(i, method);
+	    	
 	    	int responsecode 		= Integer.parseInt(TestCaseHelpers.getValue(jo,Keywords.RESPONSE_CODE ,true,i,variables));
 	    	String responsecontains	= TestCaseHelpers.getValue(jo,Keywords.RESPONSE_CONTAINS ,false,i,variables);
 	    	String bodyFile			= TestCaseHelpers.getValue(jo,Keywords.BODY ,false,i,variables);
@@ -178,18 +192,30 @@ public class TestCaseHelpers {
 	    	Map<String, String> customVars = Variables.getValueVariables(jo);
 	    	
 	    	String contentType		= TestCaseHelpers.getValue(jo,Keywords.CONTENT_TYPE ,bodyFile!=null,i,variables);
-	    	String body				= null;
-	    	if(bodyFile != null){
-	    		try {
-	    			body = Helpers.readFileToString(basePath+bodyFile);
-	    		} catch (Exception e) {
-	    			System.err.println("Error in tests json at element nr. "+i+". Cannot load body file "+bodyFile);
-	    			System.exit(2);
-	    		}
-	    	}
+	    	
+	    	String body = loadBody(basePath, i, bodyFile);
 	    	VerbosePrinter.output("Loaded Test Case '"+name+"' - "+call+" - "+method+" - "+contentType+" - "+responsecode+" - "+responsecontains+")");
 	    	testCases.add(new TestCase(name, call, method, body, contentType, responsecode, responsecontains, customVars));
 		}
 	    return testCases;
+	}
+
+	private static void validateMethod(int i, String method) {
+		if(!(method.equals(Keywords.HTTPGET)||method.equals(Keywords.HTTPDELETE)||method.equals(Keywords.HTTPPOST)||method.equals(Keywords.HTTPPUT))){
+			System.err.println("Error in tests json at element nr. "+i+". Unknown method "+method);
+		}
+	}
+
+	private static String loadBody(String basePath, int i, String bodyFile) {
+		String body				= null;
+		if(bodyFile != null){
+			try {
+				body = Helpers.readFileToString(basePath+bodyFile);
+			} catch (Exception e) {
+				System.err.println("Error in tests json at element nr. "+i+". Cannot load body file "+bodyFile);
+				System.exit(2);
+			}
+		}
+		return body;
 	}
 }

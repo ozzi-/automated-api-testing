@@ -20,39 +20,24 @@ public class Network {
 	}
 
 	public static Response doGet(String getURL) throws IOException {
-		StringBuilder result = new StringBuilder();
 		URL url = new URL(getURL);
 		HttpURLConnection conn;
-
-		if (pc != null) {
-			conn = (HttpURLConnection) url.openConnection(pc.getProxy());
-		} else {
-			conn = (HttpURLConnection) url.openConnection();
-		}
+		conn = openConnProxyAware(url);
 
 		conn.setRequestMethod(Keywords.HTTPGET);
-		BufferedReader rd;
-		String line;
-		rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-		while ((line = rd.readLine()) != null) {
-			result.append(line);
-		}
+
+		String result = readResponseBody(conn);
 		int responseCode = conn.getResponseCode();
 		conn.disconnect();
 
-		return new Response(responseCode, result.toString());
+		return new Response(responseCode, result);
 	}
 
+
 	public static Response doMethod(String postURL, String postBody, String contentType, String method) throws IOException {
-		StringBuilder result = new StringBuilder();
 		URL url = new URL(postURL);
 		HttpURLConnection conn;
-		
-		if (pc != null) {
-			conn = (HttpURLConnection) url.openConnection(pc.getProxy());
-		} else {
-			conn = (HttpURLConnection) url.openConnection();
-		}
+		conn = openConnProxyAware(url);
 
 		conn.setRequestMethod(method);
 		if (contentType != null) {
@@ -65,6 +50,15 @@ public class Network {
 			wr.flush();
 		}
 		
+		String result = readResponseBody(conn);
+		int responseCode = conn.getResponseCode();
+		conn.disconnect();
+
+		return new Response(responseCode, result);
+	}
+
+	private static String readResponseBody(HttpURLConnection conn) throws IOException {
+		StringBuilder result = new StringBuilder();
 		BufferedReader rd;
 		String line;
 		InputStream is;
@@ -77,9 +71,18 @@ public class Network {
 		while ((line = rd.readLine()) != null) {
 			result.append(line);
 		}
-		int responseCode = conn.getResponseCode();
-		conn.disconnect();
-
-		return new Response(responseCode, result.toString());
+		return result.toString();
 	}
+	
+	
+	private static HttpURLConnection openConnProxyAware(URL url) throws IOException {
+		HttpURLConnection conn;
+		if (pc != null) {
+			conn = (HttpURLConnection) url.openConnection(pc.getProxy());
+		} else {
+			conn = (HttpURLConnection) url.openConnection();
+		}
+		return conn;
+	}
+
 }

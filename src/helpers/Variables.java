@@ -46,7 +46,7 @@ public class Variables {
 	public static Map<String, String> getValueVariables(JsonObject testCaseJSON) {
 		Map<String, String> variables = new HashMap<String,String>();
 		
-		JsonElement je = testCaseJSON.get("variables");
+		JsonElement je = testCaseJSON.get(Keywords.VARS);
 		if (je instanceof JsonArray) {
 		    JsonArray ar = (JsonArray)je;
 		    for (JsonElement jsonElement : ar) {
