@@ -2,10 +2,11 @@ package main;
 
 import java.util.Map;
 
+import helpers.Keywords;
 import helpers.Variables;
-import nw.HTTPMethod;
+import helpers.VerbosePrinter;
+import model.Response;
 import nw.Network;
-import nw.HTTPResponse;
 
 public class TestCase {
 
@@ -45,13 +46,14 @@ public class TestCase {
 	}
 
 	public TestResult runTest() {
-		HTTPResponse response = null;
-		if (method.equals(HTTPMethod.GET)) {
+		Response response = null;
+		if (method.equals(Keywords.HTTPGET)) {
 			try {
+				VerbosePrinter.output("Doing HTTP Get - "+call);
 				response = Network.doGet(call);
 			} catch (Exception e) {
 				if (e.getClass().getCanonicalName().equals("java.io.FileNotFoundException")) {
-					response = new HTTPResponse(404, "");
+					response = new Response(404, "");
 				} else {
 					String body = response.getBody() == null ? "no body returned" : response.getBody();
 					return new TestResult("Exception: " + e.getMessage(), body);
@@ -59,6 +61,7 @@ public class TestCase {
 			}
 		} else {
 			try {
+				VerbosePrinter.output("Doing HTTP "+method+" - "+call+" with content type "+contentType);
 				response = Network.doMethod(call, body, contentType, method);
 			} catch (Exception e) {
 				if (e.getClass().getCanonicalName().equals(java.net.ConnectException.class.getName())) {
@@ -66,10 +69,10 @@ public class TestCase {
 					System.exit(1);
 				}
 				if (e.getClass().getCanonicalName().equals(java.io.FileNotFoundException.class.getName())) {
-					response = new HTTPResponse(404, "");
+					response = new Response(404, "");
 				} else if (e.getClass().getCanonicalName().equals(java.io.IOException.class.getName()) && e.getMessage().contains(KEYWORD_RESPONSE_CODE)) {
 					int start = e.getMessage().indexOf(KEYWORD_RESPONSE_CODE) + KEYWORD_RESPONSE_CODE.length() + 1;
-					response = new HTTPResponse(Integer.valueOf(e.getMessage().substring(start, start + 3)), "");
+					response = new Response(Integer.valueOf(e.getMessage().substring(start, start + 3)), "");
 				} else {
 					String ebody = "empty";
 					if (response != null) {
@@ -82,11 +85,10 @@ public class TestCase {
 		return evaluateTestResponse(response);
 	}
 
-	private TestResult evaluateTestResponse(HTTPResponse response) {
+	private TestResult evaluateTestResponse(Response response) {
 		boolean codeMatches = (response.getResponseCode() == expectedResponseCode);
 		if (expectedResponseContains != null) {
-			// TODO externalize string <DELIMITER>
-			String[] expectedResponseContainsList = expectedResponseContains.split("<DELIMITER>");
+			String[] expectedResponseContainsList = expectedResponseContains.split(Keywords.DELIMITER);
 			for (String containsString : expectedResponseContainsList) {
 				boolean bodyContains = response.getBody().contains(containsString);
 				if (!bodyContains) {

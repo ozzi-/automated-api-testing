@@ -18,7 +18,6 @@ import main.TestResult;
 public class Variables {
 	
 	public static Map<String,String> variables = new HashMap<String,String>();
-	static String staticKeyword="%%static%%";
 
 	/**
 	 * Load variables into variable map
@@ -26,16 +25,17 @@ public class Variables {
 	 */
 	public static void loadVariables(JsonElement testsJSON) {
 	    JsonObject  jobject = testsJSON.getAsJsonObject();
-	    if(jobject.get("variables")==null){
-	    	System.out.println("Missing variables array in tests.json");
-	    	System.exit(-1);
+	    if(jobject.get(Keywords.VARS)==null){
+	    	VerbosePrinter.output("No 'variables' array defined in test json");
+	    }else {
+	    	JsonElement variablesJSON = jobject.get(Keywords.VARS).getAsJsonArray().get(0);
+	    	Set<String> keys = variablesJSON.getAsJsonObject().keySet();
+	    	for (String key : keys) {
+	    		String value = variablesJSON.getAsJsonObject().get(key).getAsString();
+	    		variables.put(key, value);
+	    		VerbosePrinter.output("Loaded variable '"+key+"'='"+value+"'");
+	    	}	    	
 	    }
-	    
-	    JsonElement variablesJSON = jobject.get("variables").getAsJsonArray().get(0);
-	    Set<String> keys = variablesJSON.getAsJsonObject().keySet();
-	    for (String key : keys) {
-	    	variables.put(key, variablesJSON.getAsJsonObject().get(key).getAsString());
-		}
 	}
 	
 	/**
@@ -75,7 +75,7 @@ public class Variables {
 		for (String match : list) {
 			String value = variables.get(match);
 			if(value!=null){
-				value = value.replace(staticKeyword, "");
+				value = value.replace(Keywords.STATIC, "");
 				strng=strng.replace("%%<"+match+">%%",value);				
 			}else if(checkExistence){
 				System.err.println("Undeclared variable "+match);
@@ -95,8 +95,8 @@ public class Variables {
 		Map<String, String> customVars = testCase.getCustomVars();
 		boolean setVar=false;
 		for (Map.Entry<String, String> entry : customVars.entrySet()){
-			if(entry.getValue().startsWith(staticKeyword)){
-				variables.put(entry.getKey(), entry.getValue().substring(staticKeyword.length()));
+			if(entry.getValue().startsWith(Keywords.STATIC)){
+				variables.put(entry.getKey(), entry.getValue().substring(Keywords.STATIC.length()));
 			    setVar=true;
 			}else{
 				Pattern pattern = Pattern.compile(entry.getValue());

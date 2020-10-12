@@ -6,7 +6,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.Scanner;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Stream;
 
 import main.TestCase;
 import main.TestResult;
@@ -27,6 +31,13 @@ public class Helpers {
 		s.close();
 		return streamString;
 	}
+	
+	public static String getBasePath(String path) {
+		Path p = Paths.get(path);
+		Path folder = p.getParent();
+		String basePath = folder.toString()+File.separator;
+		return basePath;
+	}
 
 	// TODO provide param where to log
 	public static void writeTestCaseResult(TestCase testCase, TestResult res, String resString) {
@@ -34,8 +45,8 @@ public class Helpers {
 		dir = dir.replace("target/classes/", "results/");
 		OutputStream os = null;
 		String tCNFS = testCase.getName().replaceAll("[^a-zA-Z0-9]+", "");
-		
-		try (PrintStream printStream = new PrintStream(os); ){
+
+		try (PrintStream printStream = new PrintStream(os);) {
 			os = new FileOutputStream(dir + tCNFS + ".txt");
 			printStream.println("Method - Call:");
 			printStream.println(testCase.getMethod() + " " + testCase.getCall());
@@ -51,28 +62,23 @@ public class Helpers {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} finally {
-			if(os!=null) {
+			if (os != null) {
 				try {
 					os.close();
 				} catch (IOException e) {
 					e.printStackTrace();
-				}		
+				}
 			}
 		}
 	}
 
-	public static String readFileToString(String fileName) {
-		StringBuilder result = new StringBuilder("");
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		File file = new File(classLoader.getResource(fileName).getFile());
-		try (Scanner scanner = new Scanner(file)) {
-			while (scanner.hasNextLine()) {
-				String line = scanner.nextLine();
-				result.append(line).append(System.lineSeparator());
-			}
+	public static String readFileToString(String fileName) throws IOException {
+		StringBuilder stringBuilder = new StringBuilder();
+		try (Stream<String> stream = Files.lines(Paths.get(fileName), StandardCharsets.UTF_8)) {
+			stream.forEach(s -> stringBuilder.append(s).append("\n"));
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw e;
 		}
-		return result.toString();
+		return stringBuilder.toString();
 	}
 }

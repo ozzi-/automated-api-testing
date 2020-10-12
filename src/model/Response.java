@@ -1,10 +1,10 @@
-package nw;
+package model;
 
-public class HTTPResponse {
+public class Response {
 	private int responseCode;
 	private String body;
 	
-	public HTTPResponse(int responseCode, String body) {
+	public Response(int responseCode, String body) {
 		this.setResponseCode(responseCode);
 		this.setBody(body);
 	}

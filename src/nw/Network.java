@@ -8,6 +8,9 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import helpers.Keywords;
+import model.Response;
+
 public class Network {
 	
 	static ProxyConfig pc;
@@ -16,7 +19,7 @@ public class Network {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static HTTPResponse doGet(String getURL) throws IOException {
+	public static Response doGet(String getURL) throws IOException {
 		StringBuilder result = new StringBuilder();
 		URL url = new URL(getURL);
 		HttpURLConnection conn;
@@ -27,7 +30,7 @@ public class Network {
 			conn = (HttpURLConnection) url.openConnection();
 		}
 
-		conn.setRequestMethod(HTTPMethod.GET);
+		conn.setRequestMethod(Keywords.HTTPGET);
 		BufferedReader rd;
 		String line;
 		rd = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -37,10 +40,10 @@ public class Network {
 		int responseCode = conn.getResponseCode();
 		conn.disconnect();
 
-		return new HTTPResponse(responseCode, result.toString());
+		return new Response(responseCode, result.toString());
 	}
 
-	public static HTTPResponse doMethod(String postURL, String postBody, String contentType, String method) throws IOException {
+	public static Response doMethod(String postURL, String postBody, String contentType, String method) throws IOException {
 		StringBuilder result = new StringBuilder();
 		URL url = new URL(postURL);
 		HttpURLConnection conn;
@@ -77,6 +80,6 @@ public class Network {
 		int responseCode = conn.getResponseCode();
 		conn.disconnect();
 
-		return new HTTPResponse(responseCode, result.toString());
+		return new Response(responseCode, result.toString());
 	}
 }
