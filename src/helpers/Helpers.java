@@ -14,7 +14,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 import main.TestCase;
-import main.TestResult;
+import model.TestResult;
 
 public class Helpers {
 

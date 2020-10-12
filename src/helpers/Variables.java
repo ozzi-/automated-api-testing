@@ -13,7 +13,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import main.TestCase;
-import main.TestResult;
+import model.TestResult;
 
 public class Variables {
 	

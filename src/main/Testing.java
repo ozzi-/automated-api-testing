@@ -17,11 +17,15 @@ import helpers.TestCaseHelpers;
 import helpers.Variables;
 import helpers.VerbosePrinter;
 import model.Settings;
+import model.TestResult;
 import nw.ProxyConfig;
 
 public class Testing {
     static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
+    
+    // TODO add support for defining request headers!
+    
 	public static void main(String[] args) throws ParseException {
 		
 		parseCLIArgs(args);

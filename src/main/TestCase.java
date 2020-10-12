@@ -1,11 +1,15 @@
 package main;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import helpers.Keywords;
 import helpers.Variables;
 import helpers.VerbosePrinter;
+import model.Header;
 import model.Response;
+import model.TestResult;
 import nw.Network;
 
 public class TestCase {
@@ -17,12 +21,14 @@ public class TestCase {
 	private String expectedResponseContains;
 	private String body;
 	private String contentType;
+	private List<Header> headers = new ArrayList<Header>();
 	private Map<String, String> customVars;
 	private Map<String, String> extractBodyVars;
 	private Map<String, String> extractHeaderVars;
+	// TODO what is this used for \/
 	private static final String KEYWORD_RESPONSE_CODE = "response code:";
 
-	public TestCase(String name, String call, String method, String postBody, String contentType, int expectedResponseCode, String expectedResponseContains, Map<String, String> customVars, Map<String, String> extractBodyVars, Map<String, String> extractHeaderVars) {
+	public TestCase(String name, String call, String method, String postBody, List<Header> headers, String contentType, int expectedResponseCode, String expectedResponseContains, Map<String, String> customVars, Map<String, String> extractBodyVars, Map<String, String> extractHeaderVars) {
 		this.name = name;
 		this.call = call;
 		this.method = method;
@@ -33,6 +39,9 @@ public class TestCase {
 		this.customVars = customVars;
 		this.extractBodyVars = extractBodyVars;
 		this.extractHeaderVars = extractHeaderVars;
+		if(headers!=null) {
+			this.headers = headers;
+		}
 	}
 
 	public void injectVariables(Map<String, String> variables, boolean force) {
@@ -47,6 +56,7 @@ public class TestCase {
 		if (expectedResponseContains != null) {
 			expectedResponseContains = Variables.injectVariablesIntoString(variables, expectedResponseContains, force);
 		}
+		// TODO inject headers!
 	}
 
 	public TestResult runTest() {
@@ -54,7 +64,7 @@ public class TestCase {
 		if (method.equals(Keywords.HTTPGET)) {
 			try {
 				VerbosePrinter.output("Doing HTTP Get - "+call);
-				response = Network.doGet(call);
+				response = Network.doGet(call,headers);
 				VerbosePrinter.output("Response Code = "+response.getResponseCode()+" - Response Body = "+response.getBody());
 			} catch (Exception e) {
 				if (e.getClass().getCanonicalName().equals("java.io.FileNotFoundException")) {
@@ -67,7 +77,7 @@ public class TestCase {
 		} else {
 			try {
 				VerbosePrinter.output("Doing HTTP "+method+" - "+call+" with content type "+contentType);
-				response = Network.doMethod(call, body, contentType, method);
+				response = Network.doMethod(call, body, contentType, method, headers);
 				VerbosePrinter.output("Response Code = "+response.getResponseCode()+" - Response Body = "+response.getBody());
 			} catch (Exception e) {
 				if (e.getClass().getCanonicalName().equals(java.net.ConnectException.class.getName())) {
@@ -140,6 +150,14 @@ public class TestCase {
 
 	public void setExtractBodyVars(Map<String, String> extractBodyVars) {
 		this.extractBodyVars = extractBodyVars;
+	}
+
+	public List<Header> getHeaders() {
+		return headers;
+	}
+
+	public void setHeaders(List<Header> headers) {
+		this.headers = headers;
 	}
 
 }

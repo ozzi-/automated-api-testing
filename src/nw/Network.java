@@ -7,9 +7,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import helpers.Keywords;
+import model.Header;
 import model.Response;
 
 public class Network {
@@ -20,13 +22,17 @@ public class Network {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static Response doGet(String getURL) throws IOException {
+	public static Response doGet(String getURL, List<Header> requestHeaders) throws IOException {
 		URL url = new URL(getURL);
 		HttpURLConnection conn;
 		conn = openConnProxyAware(url);
 
 		conn.setRequestMethod(Keywords.HTTPGET);
 
+		for (Header header : requestHeaders) {
+			conn.setRequestProperty(header.getName(), header.getValue());	
+		}
+		
 		String result = readResponseBody(conn);
 		int responseCode = conn.getResponseCode();
 		Map<String, java.util.List<String>> headers = conn.getHeaderFields();
@@ -37,12 +43,17 @@ public class Network {
 	}
 
 
-	public static Response doMethod(String postURL, String postBody, String contentType, String method) throws IOException {
+	public static Response doMethod(String postURL, String postBody, String contentType, String method, List<Header> requestHeaders) throws IOException {
 		URL url = new URL(postURL);
 		HttpURLConnection conn;
 		conn = openConnProxyAware(url);
 
 		conn.setRequestMethod(method);
+		
+		for (Header header : requestHeaders) {
+			conn.setRequestProperty(header.getName(), header.getValue());			
+		}
+		
 		if (contentType != null) {
 			conn.setRequestProperty("Content-Type", contentType);
 		}

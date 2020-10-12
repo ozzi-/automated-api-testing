@@ -4,6 +4,7 @@ public class Keywords {
 	public static final String TESTS = "tests";
 	public static final String INCLUDE = "include";
 	public static final String VARS = "variables";
+	public static final String HEADERS = "headers";
 	public static final String VARS_EXTRACT_BODY = "extractVariableBody";
 	public static final String VARS_EXTRACT_HEADER = "extractVariableHeader";
 
