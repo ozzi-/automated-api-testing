@@ -1,6 +1,10 @@
 # automated-api-testing
 Set up API / web test cases with ease!
 
+https://oz-web.com/apitesting/api.php
+
+
+
 # Usage
 ## Defining test cases
 tests.json is the main file defining the test cases. 
@@ -8,20 +12,27 @@ There are two ways of adding a test case:
 - Inline , adding the necessary fields
 ```
 {
-  . . . 
   "tests": [
     {
-      "name": "createIdentity",
-      "call": "%%<w_base>%%createIdentity/",
-      "method": "POST",
+      "name": "doGet",
+      "call": "https://%%<url>%%",
+      "method": "GET",
       "responsecode": 200,
-      "body": "createIdentity.json",
-      "contenttype": "application/json",
       "responsecontains": [
-      "initialPassword","IdNumber"
+		"GET"
+	  ],
+	  "variables" : [{
+		"secret": "secret=([0-9]*)" 
+	  }]
+    },
+	{
+      "include": "post.json",
+      "includeName": "doPost"
     }
-  ]
-  . . . 
+  ],
+  "variables": [{
+	"url": "oz-web.com/apitesting/api.php"
+  }]
 }
 ```
 - Include , including the necessary fields by referencing another json file
