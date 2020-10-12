@@ -29,6 +29,7 @@ public class TestCaseHelpers {
 	    	testsArr = resolveInclude(testsArr, basePath);	    	
 	    	testsJSON.getAsJsonObject().remove(Keywords.TESTS);
 	    	testsJSON.getAsJsonObject().add(Keywords.TESTS,testsArr);
+
 		    return testsJSON;
 	    } catch (Exception e) {
 	    	System.err.println("Error parsing test json file '"+testFilePath+"': "+e.getMessage()+" - "+e.getClass().getName());
@@ -60,10 +61,9 @@ public class TestCaseHelpers {
 					JsonObject testJSON = (testsJSONArray.get(i).getAsJsonObject());
 					
 			    	mergeCustomName(testJSON, includeJSON);
-			    	mergeStaticVariablesWithTestCaseVariables(testJSON, includeJSON);
-			    	
-					testsJSONArray.remove(i);
-					testsJSONArray = JSONArrayInsert(i, includeJSON, testsJSONArray);
+
+			    	testsJSONArray.remove(i);
+					testsJSONArray = Helpers.JSONArrayInsert(i, includeJSON, testsJSONArray);
 					
 				}catch(Exception e){
 					System.err.println("Failed to include "+includeName+": "+e.getMessage()+" - "+e.getClass().getName());
@@ -88,39 +88,7 @@ public class TestCaseHelpers {
 			System.exit(-1);
 		}
 	}
-
-	private static void mergeStaticVariablesWithTestCaseVariables(JsonObject staticVariablesJSONObj, JsonElement testCaseJSONElem) {
-		if(staticVariablesJSONObj.get(Keywords.STATIC_VARS)!=null){
-			JsonArray staticVariables = staticVariablesJSONObj.get(Keywords.STATIC_VARS).getAsJsonArray();
-			for (JsonElement jsonElement : staticVariables) {
-				String key = jsonElement.getAsJsonObject().keySet().toArray()[0].toString();
-				String value = Keywords.STATIC+jsonElement.getAsJsonObject().get(key).getAsString();
-				JsonObject jsonObject = new JsonObject();
-				jsonObject.addProperty(key,value);
-				jsonElement = (JsonElement) jsonObject;
-				testCaseJSONElem.getAsJsonObject().get(Keywords.VARS).getAsJsonArray().add(jsonElement);					
-			}
-		}
-	}
 	
-	/**
-	 * inserts an element at the specific index into the array
-	 * @param index
-	 * @param val
-	 * @param array
-	 * @return array with element inserted at index
-	 */
-	public static JsonArray JSONArrayInsert(int index, JsonElement val, JsonArray array) {
-	    JsonArray newArray = new JsonArray();
-	    for (int i = 0; i < index; i++) {
-	        newArray.add(array.get(i));
-	    }
-	    newArray.add(val);
-	    for (int i = index; i < array.size(); i++) {
-	        newArray.add(array.get(i));
-	    }
-	    return newArray;
-	}
 
 	/**
 	 * gets the key of {@code value} in the jsonobject while injected defined variables.
@@ -154,7 +122,7 @@ public class TestCaseHelpers {
 		}else{
 			res = je.getAsString();
 		}
-		String strng = Variables.injectVariables(variables,res,false);
+		String strng = Variables.injectVariablesIntoString(variables,res,false);
 		return strng;
 	}
 
@@ -189,13 +157,15 @@ public class TestCaseHelpers {
 	    	String responsecontains	= TestCaseHelpers.getValue(jo,Keywords.RESPONSE_CONTAINS ,false,i,variables);
 	    	String bodyFile			= TestCaseHelpers.getValue(jo,Keywords.BODY ,false,i,variables);
 
-	    	Map<String, String> customVars = Variables.getValueVariables(jo);
-	    	
+	    	Map<String, String> customVars = Variables.getValueVariables(jo,name,Keywords.VARS);
+	    	Map<String, String> extractBodyVars = Variables.getValueVariables(jo,name,Keywords.VARS_EXTRACT_BODY);
+	    	Map<String, String> extractHeaderVars = Variables.getValueVariables(jo,name,Keywords.VARS_EXTRACT_HEADER);
+
 	    	String contentType		= TestCaseHelpers.getValue(jo,Keywords.CONTENT_TYPE ,bodyFile!=null,i,variables);
 	    	
 	    	String body = loadBody(basePath, i, bodyFile);
 	    	VerbosePrinter.output("Loaded Test Case '"+name+"' - "+call+" - "+method+" - "+contentType+" - "+responsecode+" - "+responsecontains+")");
-	    	testCases.add(new TestCase(name, call, method, body, contentType, responsecode, responsecontains, customVars));
+	    	testCases.add(new TestCase(name, call, method, body, contentType, responsecode, responsecontains, customVars, extractBodyVars, extractHeaderVars));
 		}
 	    return testCases;
 	}

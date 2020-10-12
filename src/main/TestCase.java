@@ -18,9 +18,11 @@ public class TestCase {
 	private String body;
 	private String contentType;
 	private Map<String, String> customVars;
+	private Map<String, String> extractBodyVars;
+	private Map<String, String> extractHeaderVars;
 	private static final String KEYWORD_RESPONSE_CODE = "response code:";
 
-	public TestCase(String name, String call, String method, String postBody, String contentType, int expectedResponseCode, String expectedResponseContains, Map<String, String> customVars) {
+	public TestCase(String name, String call, String method, String postBody, String contentType, int expectedResponseCode, String expectedResponseContains, Map<String, String> customVars, Map<String, String> extractBodyVars, Map<String, String> extractHeaderVars) {
 		this.name = name;
 		this.call = call;
 		this.method = method;
@@ -29,19 +31,21 @@ public class TestCase {
 		this.expectedResponseCode = expectedResponseCode;
 		this.expectedResponseContains = expectedResponseContains;
 		this.customVars = customVars;
+		this.extractBodyVars = extractBodyVars;
+		this.extractHeaderVars = extractHeaderVars;
 	}
 
 	public void injectVariables(Map<String, String> variables, boolean force) {
-		name = Variables.injectVariables(variables, name, force);
-		call = Variables.injectVariables(variables, call, force);
+		name = Variables.injectVariablesIntoString(variables, name, force);
+		call = Variables.injectVariablesIntoString(variables, call, force);
 		if (body != null) {
-			body = Variables.injectVariables(variables, body, force);
+			body = Variables.injectVariablesIntoString(variables, body, force);
 		}
 		if (contentType != null) {
-			contentType = Variables.injectVariables(variables, contentType, force);
+			contentType = Variables.injectVariablesIntoString(variables, contentType, force);
 		}
 		if (expectedResponseContains != null) {
-			expectedResponseContains = Variables.injectVariables(variables, expectedResponseContains, force);
+			expectedResponseContains = Variables.injectVariablesIntoString(variables, expectedResponseContains, force);
 		}
 	}
 
@@ -51,6 +55,7 @@ public class TestCase {
 			try {
 				VerbosePrinter.output("Doing HTTP Get - "+call);
 				response = Network.doGet(call);
+				VerbosePrinter.output("Response Code = "+response.getResponseCode()+" - Response Body = "+response.getBody());
 			} catch (Exception e) {
 				if (e.getClass().getCanonicalName().equals("java.io.FileNotFoundException")) {
 					response = new Response(404, "");
@@ -63,6 +68,7 @@ public class TestCase {
 			try {
 				VerbosePrinter.output("Doing HTTP "+method+" - "+call+" with content type "+contentType);
 				response = Network.doMethod(call, body, contentType, method);
+				VerbosePrinter.output("Response Code = "+response.getResponseCode()+" - Response Body = "+response.getBody());
 			} catch (Exception e) {
 				if (e.getClass().getCanonicalName().equals(java.net.ConnectException.class.getName())) {
 					System.err.println(e.getMessage() + " " + call);
@@ -97,7 +103,7 @@ public class TestCase {
 				}
 			}
 		}
-		return new TestResult(codeMatches, true, response.getResponseCode(), expectedResponseCode, response.getBody());
+		return new TestResult(codeMatches, true, response.getResponseCode(), expectedResponseCode, response.getBody(), response.getHeaders());
 	}
 
 	public String getName() {
@@ -118,6 +124,22 @@ public class TestCase {
 
 	public String getMethod() {
 		return method;
+	}
+
+	public Map<String, String> getExtractHeaderVars() {
+		return extractHeaderVars;
+	}
+
+	public void setExtractHeaderVars(Map<String, String> extractHeaderVars) {
+		this.extractHeaderVars = extractHeaderVars;
+	}
+
+	public Map<String, String> getExtractBodyVars() {
+		return extractBodyVars;
+	}
+
+	public void setExtractBodyVars(Map<String, String> extractBodyVars) {
+		this.extractBodyVars = extractBodyVars;
 	}
 
 }

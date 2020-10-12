@@ -1,9 +1,0 @@
-{
- 	"loginId": "%%<c_createIdentity_LoginID>%%",
-	"email": "%%<c_createIdentity_Email>%%",
-	"language": "DE",
-	"name": "Erich",
-	"birthdate": "01.11.1992",
-	"sex": "m",
-	"country": "CH"
-}

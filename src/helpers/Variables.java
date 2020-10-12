@@ -17,7 +17,7 @@ import main.TestResult;
 
 public class Variables {
 	
-	public static Map<String,String> variables = new HashMap<String,String>();
+	public static Map<String,String> globalVariables = new HashMap<String,String>();
 
 	/**
 	 * Load variables into variable map
@@ -32,7 +32,7 @@ public class Variables {
 	    	Set<String> keys = variablesJSON.getAsJsonObject().keySet();
 	    	for (String key : keys) {
 	    		String value = variablesJSON.getAsJsonObject().get(key).getAsString();
-	    		variables.put(key, value);
+	    		globalVariables.put(key, value);
 	    		VerbosePrinter.output("Loaded variable '"+key+"'='"+value+"'");
 	    	}	    	
 	    }
@@ -41,47 +41,41 @@ public class Variables {
 	/**
 	 * Load variables defined in a testcase json structure
 	 * @param testCaseJSON
+	 * @param name 
 	 * @return variables map
 	 */
-	public static Map<String, String> getValueVariables(JsonObject testCaseJSON) {
+	public static Map<String, String> getValueVariables(JsonObject testCaseJSON, String name, String keyword) {
 		Map<String, String> variables = new HashMap<String,String>();
 		
-		JsonElement je = testCaseJSON.get(Keywords.VARS);
+		JsonElement je = testCaseJSON.get(keyword);
 		if (je instanceof JsonArray) {
 		    JsonArray ar = (JsonArray)je;
 		    for (JsonElement jsonElement : ar) {
 				String key = jsonElement.getAsJsonObject().keySet().toArray()[0].toString();
 				String value = jsonElement.getAsJsonObject().get(key).getAsString();
 				variables.put(key, value);
+	    		VerbosePrinter.output("Loaded "+keyword+" '"+key+"'='"+value+"' in test case '"+name+"'");
 			}
 		}
 		return variables;
 	}
 
-	/**
-	 * Inject variables into string, if checkExistence is set, an error will be displayed if a variable defined in strng does not exist in the variables map
-	 * @param variables
-	 * @param strng
-	 * @param checkExistence
-	 * @return strng with replaced placeholders 
-	 */
-	public static String injectVariables(Map<String, String> variables, String strng, boolean checkExistence) { 
+	public static String injectVariablesIntoString(Map<String, String> variables, String stringToBeInjected, boolean checkExistence) { 
 		Pattern pattern = Pattern.compile("%%<[^>%]+>%%");
 		List<String> list = new ArrayList<String>();
-		Matcher m = pattern.matcher(strng);
+		Matcher m = pattern.matcher(stringToBeInjected);
 		while (m.find()) {
 		    list.add(m.group().replace("%%<", "").replace(">%%", ""));
 		}
 		for (String match : list) {
 			String value = variables.get(match);
 			if(value!=null){
-				value = value.replace(Keywords.STATIC, "");
-				strng=strng.replace("%%<"+match+">%%",value);				
+				stringToBeInjected=stringToBeInjected.replace("%%<"+match+">%%",value);				
 			}else if(checkExistence){
-				System.err.println("Undeclared variable "+match);
+				System.err.println("Failure injecting variable '"+match+"' as not found");
 			}
 		}
-		return strng;
+		return stringToBeInjected;
 	}
 	
 	/**
@@ -91,25 +85,50 @@ public class Variables {
 	 * @param testCase
 	 * @param res
 	 */
-	public static void resolveTestCaseCustomVariables(Map<String, String> variables, ArrayList<TestCase> testCases, TestCase testCase, TestResult res) {
-		Map<String, String> customVars = testCase.getCustomVars();
+	public static void resolveTestCaseCustomVariables(ArrayList<TestCase> testCases, TestCase testCase, TestResult res) {
+
+		Map<String, String> tcVars = testCase.getCustomVars();
+		// add testcase variables into global variables now
+		Variables.globalVariables.putAll(tcVars);
+		
 		boolean setVar=false;
-		for (Map.Entry<String, String> entry : customVars.entrySet()){
-			if(entry.getValue().startsWith(Keywords.STATIC)){
-				variables.put(entry.getKey(), entry.getValue().substring(Keywords.STATIC.length()));
+		boolean extracted=false;
+		
+		Map<String, String> tcBodyVars = testCase.getExtractBodyVars();
+		Map<String, String> tcHeaderVars = testCase.getExtractHeaderVars();
+		
+		for (Map.Entry<String, String> entry : tcBodyVars.entrySet()){
+			Pattern pattern = Pattern.compile(entry.getValue());
+			Matcher m = pattern.matcher(res.getBody());
+			while (m.find()) {
+				Variables.globalVariables.put(entry.getKey(), m.group(1)); 
+				VerbosePrinter.output("Extracted Body Variable by Regex "+entry.getValue()+" = "+m.group(1));
 			    setVar=true;
-			}else{
-				Pattern pattern = Pattern.compile(entry.getValue());
-				Matcher m = pattern.matcher(res.getBody());
-				while (m.find()) {
-				    variables.put(entry.getKey(), m.group(1));
-				    setVar=true;
-				}
+			    extracted=true;
+			}
+			if(!extracted) {
+				System.err.println("Could not extract body variable by applying regex '"+entry.getValue());
 			}
 		}
+		extracted=false;
+		
+		Map<String, List<String>> headers = res.getHeaders();
+		for (Map.Entry<String, String> entry : tcHeaderVars.entrySet()){
+			if(headers.containsKey(entry.getValue())) {
+				String headerValue = headers.get(entry.getValue()).get(0);
+				Variables.globalVariables.put(entry.getKey(), headerValue);
+				VerbosePrinter.output("Extracted Header Variable by Key "+entry.getValue()+" = "+headerValue);
+			    setVar=true;
+			    extracted=true;
+			}
+			if(!extracted) {
+				System.err.println("Could not extract header by header name '"+entry.getValue());
+			}
+		}
+		
 		if(setVar){
 			for (TestCase testCaseTC : testCases) {
-				testCaseTC.injectVariables(variables,true);
+				testCaseTC.injectVariables(Variables.globalVariables,true);
 			}				
 		}
 	}

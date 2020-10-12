@@ -5,7 +5,7 @@ public class VerbosePrinter {
 	
 	public static void output(String str) {
 		if(on) {
-			System.out.println("* * "+str);
+			System.out.println("     "+str);
 		}
 	}
 }

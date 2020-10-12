@@ -1,5 +1,7 @@
 package main;
 
+import java.util.List;
+import java.util.Map;
 
 public class TestResult {
 	private boolean codeMatches;
@@ -8,13 +10,15 @@ public class TestResult {
 	private int responseCode;
 	private int expectedResponseCode;
 	private String body;
+	private Map<String, List<String>> headers;
 
-	public TestResult(boolean codeMatches, boolean contains, int responseCode, int expectedResponseCode, String body) {
+	public TestResult(boolean codeMatches, boolean contains, int responseCode, int expectedResponseCode, String body, Map<String, List<String>> headers) {
 		this.codeMatches = codeMatches;
 		this.contains = contains;
 		this.responseCode = responseCode;
 		this.expectedResponseCode = expectedResponseCode;
 		this.body = body;
+		this.setHeaders(headers);
 	}
 	
 	public TestResult(String error, String body) {
@@ -42,5 +46,13 @@ public class TestResult {
 			
 		}
 		return "No failure";
+	}
+
+	public Map<String, List<String>> getHeaders() {
+		return headers;
+	}
+
+	public void setHeaders(Map<String, List<String>> headers) {
+		this.headers = headers;
 	}
 }

@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 
 import helpers.Keywords;
 import model.Response;
@@ -28,9 +29,11 @@ public class Network {
 
 		String result = readResponseBody(conn);
 		int responseCode = conn.getResponseCode();
+		Map<String, java.util.List<String>> headers = conn.getHeaderFields();
+
 		conn.disconnect();
 
-		return new Response(responseCode, result);
+		return new Response(responseCode, result, headers);
 	}
 
 
@@ -52,9 +55,12 @@ public class Network {
 		
 		String result = readResponseBody(conn);
 		int responseCode = conn.getResponseCode();
+		
+		Map<String, java.util.List<String>> headers = conn.getHeaderFields();
+
 		conn.disconnect();
 
-		return new Response(responseCode, result);
+		return new Response(responseCode, result, headers);
 	}
 
 	private static String readResponseBody(HttpURLConnection conn) throws IOException {

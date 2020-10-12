@@ -10,6 +10,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+
 import main.TestCase;
 import main.TestResult;
 
@@ -56,4 +59,24 @@ public class Helpers {
 		}
 		return stringBuilder.toString();
 	}
+	
+	/**
+	 * inserts an element at the specific index into the array
+	 * @param index
+	 * @param val
+	 * @param array
+	 * @return array with element inserted at index
+	 */
+	public static JsonArray JSONArrayInsert(int index, JsonElement val, JsonArray array) {
+	    JsonArray newArray = new JsonArray();
+	    for (int i = 0; i < index; i++) {
+	        newArray.add(array.get(i));
+	    }
+	    newArray.add(val);
+	    for (int i = index; i < array.size(); i++) {
+	        newArray.add(array.get(i));
+	    }
+	    return newArray;
+	}
+
 }

@@ -20,31 +20,39 @@ import model.Settings;
 import nw.ProxyConfig;
 
 public class Testing {
+    static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+
 	public static void main(String[] args) throws ParseException {
-		parseCLIArgs(args);
 		
+		parseCLIArgs(args);
+		Date date = new Date();
+		System.out.println(dateFormat.format(date)+" loading tests");
+
 		JsonElement testsJSON = TestCaseHelpers.loadTestJSONFile(Settings.testFilePath);
 		Variables.loadVariables(testsJSON);
 		ProxyConfig.loadProxy(testsJSON);
 		// OK
-		ArrayList<TestCase> testCases = TestCaseHelpers.loadTestCases(testsJSON,Variables.variables, Helpers.getBasePath(Settings.testFilePath));
+		ArrayList<TestCase> testCases = TestCaseHelpers.loadTestCases(testsJSON,Variables.globalVariables, Helpers.getBasePath(Settings.testFilePath));
 
 		runTests(testCases);
 	}
 
 	private static void runTests(ArrayList<TestCase> testCases) {
-	    DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		
 		for (TestCase testCase : testCases) {
+			Date date = new Date();
+			System.out.println(dateFormat.format(date)+" running test '"+testCase.getName()+"'");
+
 			long exStart = System.nanoTime();
 			testCase.injectVariables(testCase.getCustomVars(),false); 
-			testCase.injectVariables(Variables.variables,true);
+			testCase.injectVariables(Variables.globalVariables,true);
 			TestResult res = testCase.runTest();
 			long exEnd = System.nanoTime();
 			long exTot = (exEnd-exStart)/1000/1000;
 			
 			String resString = printTestResult(dateFormat, testCase, res, exTot);
 			// TODO improve \/
-			Variables.resolveTestCaseCustomVariables(Variables.variables, testCases, testCase, res);
+			Variables.resolveTestCaseCustomVariables(testCases, testCase, res);
 			if(Settings.logFilePath!=null) {
 				Helpers.writeTestCaseResult(Settings.logFilePath, testCase, res, resString);
 			}
