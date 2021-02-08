@@ -18,6 +18,7 @@ public class TestCase {
 	private String call;
 	private String method;
 	private int expectedResponseCode;
+	private int timeout = 5000;
 	private String expectedResponseContains;
 	private String body;
 	private String contentType;
@@ -25,8 +26,6 @@ public class TestCase {
 	private Map<String, String> customVars;
 	private Map<String, String> extractBodyVars;
 	private Map<String, String> extractHeaderVars;
-	// TODO what is this used for \/
-	private static final String KEYWORD_RESPONSE_CODE = "response code:";
 
 	public TestCase(String name, String call, String method, String postBody, List<Header> headers, String contentType, int expectedResponseCode, String expectedResponseContains, Map<String, String> customVars, Map<String, String> extractBodyVars, Map<String, String> extractHeaderVars) {
 		this.name = name;
@@ -56,46 +55,65 @@ public class TestCase {
 		if (expectedResponseContains != null) {
 			expectedResponseContains = Variables.injectVariablesIntoString(variables, expectedResponseContains, force);
 		}
-		// TODO inject headers!
+		for (Header header : headers) {
+			header.setValue(Variables.injectVariablesIntoString(variables, header.getValue(), force));
+		}
 	}
 
 	public TestResult runTest() {
 		Response response = null;
 		if (method.equals(Keywords.HTTPGET)) {
-			try {
-				VerbosePrinter.output("Doing HTTP Get - "+call);
-				response = Network.doGet(call,headers);
-				VerbosePrinter.output("Response Code = "+response.getResponseCode()+" - Response Body = "+response.getBody());
-			} catch (Exception e) {
-				if (e.getClass().getCanonicalName().equals("java.io.FileNotFoundException")) {
-					response = new Response(404, "");
-				} else {
-					String body = response.getBody() == null ? "no body returned" : response.getBody();
-					return new TestResult("Exception: " + e.getMessage(), body);
-				}
-			}
+			return runGet(response);
 		} else {
-			try {
-				VerbosePrinter.output("Doing HTTP "+method+" - "+call+" with content type "+contentType);
-				response = Network.doMethod(call, body, contentType, method, headers);
-				VerbosePrinter.output("Response Code = "+response.getResponseCode()+" - Response Body = "+response.getBody());
-			} catch (Exception e) {
-				if (e.getClass().getCanonicalName().equals(java.net.ConnectException.class.getName())) {
-					System.err.println(e.getMessage() + " " + call);
-					System.exit(1);
+			return runOther(response);
+		}
+	}
+
+	private TestResult runOther(Response response) {
+		try {
+			VerbosePrinter.output("Doing HTTP "+method+" - "+call+" with content type "+contentType);
+			response = Network.doMethod(call, body, contentType, method, headers, timeout);
+			VerbosePrinter.output("Response Code = "+response.getResponseCode()+" - Response Body = "+response.getBody());
+		} catch (Exception e) {
+			if (e.getClass().getCanonicalName().equals(java.net.ConnectException.class.getName())) {
+				System.err.println(e.getMessage() + " " + call);
+				System.exit(1);
+			}
+			if (e.getClass().getCanonicalName().equals(java.io.FileNotFoundException.class.getName())) {
+				response = new Response(404, "");
+			} else if (e.getClass().getCanonicalName().equals("java.util.concurrent.TimeoutException")) {
+				response = new Response(0, "Timeout");
+				return new TestResult("Exception: " + e.getMessage(), "");
+			} else if (e.getClass().getCanonicalName().equals(java.io.IOException.class.getName()) && e.getMessage().contains(Keywords.KEYWORD_RESPONSE_CODE)) {
+				int start = e.getMessage().indexOf(Keywords.KEYWORD_RESPONSE_CODE) + Keywords.KEYWORD_RESPONSE_CODE.length() + 1;
+				response = new Response(Integer.valueOf(e.getMessage().substring(start, start + 3)), "");
+			} else {
+				String ebody = "empty";
+				if (response != null) {
+					ebody = response.getBody();
 				}
-				if (e.getClass().getCanonicalName().equals(java.io.FileNotFoundException.class.getName())) {
-					response = new Response(404, "");
-				} else if (e.getClass().getCanonicalName().equals(java.io.IOException.class.getName()) && e.getMessage().contains(KEYWORD_RESPONSE_CODE)) {
-					int start = e.getMessage().indexOf(KEYWORD_RESPONSE_CODE) + KEYWORD_RESPONSE_CODE.length() + 1;
-					response = new Response(Integer.valueOf(e.getMessage().substring(start, start + 3)), "");
-				} else {
-					String ebody = "empty";
-					if (response != null) {
-						ebody = response.getBody();
-					}
-					return new TestResult("Exception: " + e.getMessage(), ebody);
-				}
+				return new TestResult("Exception: " + e.getMessage(), ebody);
+			}
+		}
+		return evaluateTestResponse(response);
+	}
+
+	private TestResult runGet(Response response) {
+		try {
+			VerbosePrinter.output("Doing HTTP Get - "+call);
+			response = Network.doGet(call,headers, timeout);
+			VerbosePrinter.output("Response Code = "+response.getResponseCode()+" - Response Body = "+response.getBody());
+			
+		} catch (Exception e) {
+			if (e.getClass().getCanonicalName().equals("java.io.FileNotFoundException")) {
+				response = new Response(404, "");
+			} else if (e.getClass().getCanonicalName().equals("java.util.concurrent.TimeoutException")) {
+					response = new Response(0, "Timeout");
+					return new TestResult("Exception: " + e.getMessage(), "");
+			} else {
+				e.printStackTrace();
+				String body = response.getBody() == null ? "no body returned" : response.getBody();
+				return new TestResult("Exception: " + e.getMessage(), body);
 			}
 		}
 		return evaluateTestResponse(response);
@@ -158,6 +176,14 @@ public class TestCase {
 
 	public void setHeaders(List<Header> headers) {
 		this.headers = headers;
+	}
+
+	public int getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(int timeout) {
+		this.timeout = timeout;
 	}
 
 }

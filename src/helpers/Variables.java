@@ -28,13 +28,15 @@ public class Variables {
 	    if(jobject.get(Keywords.VARS)==null){
 	    	VerbosePrinter.output("No 'variables' array defined in test json");
 	    }else {
-	    	JsonElement variablesJSON = jobject.get(Keywords.VARS).getAsJsonArray().get(0);
-	    	Set<String> keys = variablesJSON.getAsJsonObject().keySet();
-	    	for (String key : keys) {
-	    		String value = variablesJSON.getAsJsonObject().get(key).getAsString();
-	    		globalVariables.put(key, value);
-	    		VerbosePrinter.output("Loaded variable '"+key+"'='"+value+"'");
-	    	}	    	
+	    	JsonArray variablesJSON = jobject.get(Keywords.VARS).getAsJsonArray();
+	    	for (JsonElement variableElement : variablesJSON) {
+				Set<String> keys = variableElement.getAsJsonObject().keySet();
+				for (String key : keys) {
+					String value = variableElement.getAsJsonObject().get(key).getAsString();
+		    		globalVariables.put(key, value);
+		    		VerbosePrinter.output("Loaded variable '"+key+"'='"+value+"'");
+				}
+			}    	
 	    }
 	}
 	
@@ -107,14 +109,14 @@ public class Variables {
 			    extracted=true;
 			}
 			if(!extracted) {
-				System.err.println("Could not extract body variable by applying regex '"+entry.getValue());
+				System.err.println("Could not extract body variable by applying regex '"+entry.getValue()+"'");
 			}
 		}
 		extracted=false;
 		
 		Map<String, List<String>> headers = res.getHeaders();
 		for (Map.Entry<String, String> entry : tcHeaderVars.entrySet()){
-			if(headers.containsKey(entry.getValue())) {
+			if(headers!=null && headers.containsKey(entry.getValue())) {
 				String headerValue = headers.get(entry.getValue()).get(0);
 				Variables.globalVariables.put(entry.getKey(), headerValue);
 				VerbosePrinter.output("Extracted Header Variable by Key "+entry.getValue()+" = "+headerValue);
@@ -122,7 +124,7 @@ public class Variables {
 			    extracted=true;
 			}
 			if(!extracted) {
-				System.err.println("Could not extract header by header name '"+entry.getValue());
+				System.err.println("Could not extract header by header name '"+entry.getValue()+"'");
 			}
 		}
 		

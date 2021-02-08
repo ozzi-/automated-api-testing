@@ -7,6 +7,7 @@ public class Keywords {
 	public static final String HEADERS = "headers";
 	public static final String VARS_EXTRACT_BODY = "extractVariableBody";
 	public static final String VARS_EXTRACT_HEADER = "extractVariableHeader";
+	public static final String TIMEOUT = "timeout";
 
 	public static final String NAME = "name";
 	public static final String INCLUDE_NAME = "includeName";
@@ -18,7 +19,8 @@ public class Keywords {
 	public static final String RESPONSE_CONTAINS = "responseContains";
 	public static final String RESPONSE_CODE = "responseCode";
 	public static final String CONTENT_TYPE = "contentType";
-	
+	public static final String KEYWORD_RESPONSE_CODE = "response code:";
+
 	public static final String HTTPGET="GET";
 	public static final String HTTPDELETE = "DELETE";
 	public static final String HTTPPOST = "POST";
@@ -26,6 +28,5 @@ public class Keywords {
 
 	public static final String PROXY = "proxy";
 	public static final String ADDRESS = "address";
-	public static final String PORT = "port";
-	
+	public static final String PORT = "port";	
 }

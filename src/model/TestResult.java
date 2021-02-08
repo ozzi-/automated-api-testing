@@ -51,6 +51,10 @@ public class TestResult {
 	public Map<String, List<String>> getHeaders() {
 		return headers;
 	}
+	
+	public String getError() {
+		return error;
+	}
 
 	public void setHeaders(Map<String, List<String>> headers) {
 		this.headers = headers;

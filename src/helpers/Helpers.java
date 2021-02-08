@@ -57,7 +57,11 @@ public class Helpers {
 		} catch (IOException e) {
 			throw e;
 		}
-		return stringBuilder.toString();
+		String res = stringBuilder.toString();
+		if(res.length()>1) {
+			res = res.substring(0,res.length()-1);
+		}
+		return res;
 	}
 	
 	/**

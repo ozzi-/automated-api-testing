@@ -9,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import helpers.Keywords;
 import model.Header;
@@ -22,11 +23,12 @@ public class Network {
 		throw new IllegalStateException("Utility class");
 	}
 
-	public static Response doGet(String getURL, List<Header> requestHeaders) throws IOException {
+	public static Response doGet(String getURL, List<Header> requestHeaders, int timeout) throws IOException, TimeoutException {
 		URL url = new URL(getURL);
 		HttpURLConnection conn;
 		conn = openConnProxyAware(url);
-
+		conn.setReadTimeout(timeout);
+		
 		conn.setRequestMethod(Keywords.HTTPGET);
 
 		for (Header header : requestHeaders) {
@@ -43,11 +45,11 @@ public class Network {
 	}
 
 
-	public static Response doMethod(String postURL, String postBody, String contentType, String method, List<Header> requestHeaders) throws IOException {
+	public static Response doMethod(String postURL, String postBody, String contentType, String method, List<Header> requestHeaders, int timeout) throws IOException, TimeoutException {
 		URL url = new URL(postURL);
 		HttpURLConnection conn;
 		conn = openConnProxyAware(url);
-
+		conn.setReadTimeout(timeout);
 		conn.setRequestMethod(method);
 		
 		for (Header header : requestHeaders) {
@@ -74,7 +76,7 @@ public class Network {
 		return new Response(responseCode, result, headers);
 	}
 
-	private static String readResponseBody(HttpURLConnection conn) throws IOException {
+	private static String readResponseBody(HttpURLConnection conn) throws IOException, TimeoutException {
 		StringBuilder result = new StringBuilder();
 		BufferedReader rd;
 		String line;
@@ -84,9 +86,16 @@ public class Network {
 		} catch (Exception e) {
 			is = conn.getErrorStream();
 		}
-		rd = new BufferedReader(new InputStreamReader(is));
-		while ((line = rd.readLine()) != null) {
-			result.append(line);
+		try {
+			if(is==null) {
+				return "";
+			}
+			rd = new BufferedReader(new InputStreamReader(is));
+			while ((line = rd.readLine()) != null) {
+				result.append(line);
+			}			
+		}catch (NullPointerException e) {
+			throw new TimeoutException("Reading Response took too long - reached timeout");
 		}
 		return result.toString();
 	}

@@ -53,30 +53,31 @@ public class TestCaseHelpers {
 	 */
 	private static JsonArray resolveInclude(JsonArray testsJSONArray, String basePath) {
 		for (int i = 0; i < testsJSONArray.size(); i++) {
-			JsonElement test = testsJSONArray.get(i).getAsJsonObject().get(Keywords.INCLUDE);
-			if (test != null) {
-				String includeName = "Unknown - Array entry #" + i;
-				try {
-					includeName = (testsJSONArray.get(i).getAsJsonObject().get(Keywords.INCLUDE).getAsString());
-					VerbosePrinter.output("Resolved include '" + includeName + "'");
-					String includeJSONString = Helpers.readFileToString(basePath + includeName);
-					if (includeJSONString.length() == 0) {
-						throw new Exception("Include " + includeName + " is an empty file");
+			if(!testsJSONArray.get(i).isJsonNull()) { // ignore trailing ',' in tests array
+				JsonElement test = testsJSONArray.get(i).getAsJsonObject().get(Keywords.INCLUDE);
+				if (test != null) {
+					String includeName = "Unknown - Array entry #" + i;
+					try {
+						includeName = (testsJSONArray.get(i).getAsJsonObject().get(Keywords.INCLUDE).getAsString());
+						VerbosePrinter.output("Resolved include '" + includeName + "'");
+						String includeJSONString = Helpers.readFileToString(basePath + includeName);
+						if (includeJSONString.length() == 0) {
+							throw new Exception("Include " + includeName + " is an empty file");
+						}
+						JsonElement includeJSON = new JsonParser().parse(includeJSONString);
+						JsonObject testJSON = (testsJSONArray.get(i).getAsJsonObject());
+						
+						mergeCustomName(testJSON, includeJSON);
+						
+						testsJSONArray.remove(i);
+						testsJSONArray = Helpers.JSONArrayInsert(i, includeJSON, testsJSONArray);
+						
+					} catch (Exception e) {
+						System.err.println("Failed to include " + includeName + ": " + e.getMessage() + " - "
+								+ e.getClass().getName());
+						e.printStackTrace();
+						System.exit(-1);
 					}
-					JsonElement includeJSON = new JsonParser().parse(includeJSONString);
-
-					JsonObject testJSON = (testsJSONArray.get(i).getAsJsonObject());
-
-					mergeCustomName(testJSON, includeJSON);
-
-					testsJSONArray.remove(i);
-					testsJSONArray = Helpers.JSONArrayInsert(i, includeJSON, testsJSONArray);
-
-				} catch (Exception e) {
-					System.err.println("Failed to include " + includeName + ": " + e.getMessage() + " - "
-							+ e.getClass().getName());
-					e.printStackTrace();
-					System.exit(-1);
 				}
 			}
 		}
@@ -156,46 +157,53 @@ public class TestCaseHelpers {
 		int i = 0;
 		for (JsonElement jsonElement : jarray) {
 			i++;
-			JsonObject jo = jsonElement.getAsJsonObject();
-			String name = TestCaseHelpers.getValue(jo, Keywords.NAME, true, i, variables);
-			if (!testNames.add(name)) {
-				System.err.println("Duplicate test name '" + name + "' found. Please use unique test names.");
-			}
-			String call = TestCaseHelpers.getValue(jo, Keywords.CALL, true, i, variables);
-			String method = TestCaseHelpers.getValue(jo, Keywords.METHOD, true, i, variables);
-			validateMethod(i, method);
+			if(!jsonElement.isJsonNull()) {
+				JsonObject jo = jsonElement.getAsJsonObject();
+				String name = TestCaseHelpers.getValue(jo, Keywords.NAME, true, i, variables);
+				if (!testNames.add(name)) {
+					System.err.println("Duplicate test name '" + name + "' found. Please use unique test names.");
+				}
+				String call = TestCaseHelpers.getValue(jo, Keywords.CALL, true, i, variables);
+				String method = TestCaseHelpers.getValue(jo, Keywords.METHOD, true, i, variables);
+				validateMethod(i, method);
 
-			int responsecode = Integer
-					.parseInt(TestCaseHelpers.getValue(jo, Keywords.RESPONSE_CODE, true, i, variables));
-			String responsecontains = TestCaseHelpers.getValue(jo, Keywords.RESPONSE_CONTAINS, false, i, variables);
-			String bodyFile = TestCaseHelpers.getValue(jo, Keywords.BODY, false, i, variables);
+				int responsecode = Integer.parseInt(TestCaseHelpers.getValue(jo, Keywords.RESPONSE_CODE, true, i, variables));
+				String responsecontains = TestCaseHelpers.getValue(jo, Keywords.RESPONSE_CONTAINS, false, i, variables);
+				String bodyFile = TestCaseHelpers.getValue(jo, Keywords.BODY, false, i, variables);
 
-			Map<String, String> customVars = Variables.getValueVariables(jo, name, Keywords.VARS);
-			Map<String, String> extractBodyVars = Variables.getValueVariables(jo, name, Keywords.VARS_EXTRACT_BODY);
-			Map<String, String> extractHeaderVars = Variables.getValueVariables(jo, name, Keywords.VARS_EXTRACT_HEADER);
+				Map<String, String> customVars = Variables.getValueVariables(jo, name, Keywords.VARS);
+				Map<String, String> extractBodyVars = Variables.getValueVariables(jo, name, Keywords.VARS_EXTRACT_BODY);
+				Map<String, String> extractHeaderVars = Variables.getValueVariables(jo, name, Keywords.VARS_EXTRACT_HEADER);
 
-			String contentType = TestCaseHelpers.getValue(jo, Keywords.CONTENT_TYPE, bodyFile != null, i, variables);
-			
-			List<Header> headers = new ArrayList<Header>();
-			JsonArray headersJA = jo.getAsJsonArray(Keywords.HEADERS);
-			if (headersJA != null) {
-				for (JsonElement headerElem : headersJA) {
-					JsonObject headerObj = headerElem.getAsJsonObject();
-					Set<Entry<String, JsonElement>> headerNameObj = headerObj.entrySet();
-					for (Map.Entry<String, JsonElement> entry : headerNameObj) {
-						String headerName = entry.getKey();
-						String headerValue = headerObj.get(headerName).getAsString();
-						headers.add(new Header(headerName, headerValue));
-						VerbosePrinter.output("Loaded Custom Header '"+headerName+"'='"+headerValue+"'");
+				String contentType = TestCaseHelpers.getValue(jo, Keywords.CONTENT_TYPE, bodyFile != null, i, variables);
+				
+				List<Header> headers = new ArrayList<Header>();
+				JsonArray headersJA = jo.getAsJsonArray(Keywords.HEADERS);
+				if (headersJA != null) {
+					for (JsonElement headerElem : headersJA) {
+						JsonObject headerObj = headerElem.getAsJsonObject();
+						Set<Entry<String, JsonElement>> headerNameObj = headerObj.entrySet();
+						for (Map.Entry<String, JsonElement> entry : headerNameObj) {
+							String headerName = entry.getKey();
+							String headerValue = headerObj.get(headerName).getAsString();
+							headers.add(new Header(headerName, headerValue));
+							VerbosePrinter.output("Loaded Custom Header '"+headerName+"'='"+headerValue+"'");
+						}
 					}
 				}
+				
+				String body = loadBody(basePath, i, bodyFile);
+				VerbosePrinter.output("Loaded Test Case '" + name + "' - " + call + " - " + method + " - " + contentType
+						+ " - " + responsecode + " - " + responsecontains + ")");
+				
+				TestCase tc = new TestCase(name, call, method, body, headers, contentType, responsecode, responsecontains, customVars, extractBodyVars, extractHeaderVars);
+				
+				if(jo.get(Keywords.TIMEOUT)!=null) {
+					int timeout = jo.get(Keywords.TIMEOUT).getAsInt();
+					tc.setTimeout(timeout);				
+				}
+				testCases.add(tc);	
 			}
-			
-			String body = loadBody(basePath, i, bodyFile);
-			VerbosePrinter.output("Loaded Test Case '" + name + "' - " + call + " - " + method + " - " + contentType
-					+ " - " + responsecode + " - " + responsecontains + ")");
-			testCases.add(new TestCase(name, call, method, body, headers, contentType, responsecode, responsecontains,
-					customVars, extractBodyVars, extractHeaderVars));
 		}
 		return testCases;
 
@@ -213,6 +221,7 @@ public class TestCaseHelpers {
 		if (bodyFile != null) {
 			try {
 				body = Helpers.readFileToString(basePath + bodyFile);
+
 			} catch (Exception e) {
 				System.err.println("Error in tests json at element nr. " + i + ". Cannot load body file " + bodyFile);
 				System.exit(2);

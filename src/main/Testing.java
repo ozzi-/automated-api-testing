@@ -23,10 +23,7 @@ import nw.ProxyConfig;
 public class Testing {
     static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
-    
-    // TODO add support for defining request headers!
-    
-	public static void main(String[] args) throws ParseException {
+    public static void main(String[] args) throws ParseException {
 		
 		parseCLIArgs(args);
 		Date date = new Date();
@@ -35,13 +32,17 @@ public class Testing {
 		JsonElement testsJSON = TestCaseHelpers.loadTestJSONFile(Settings.testFilePath);
 		Variables.loadVariables(testsJSON);
 		ProxyConfig.loadProxy(testsJSON);
-		// OK
 		ArrayList<TestCase> testCases = TestCaseHelpers.loadTestCases(testsJSON,Variables.globalVariables, Helpers.getBasePath(Settings.testFilePath));
 
-		runTests(testCases);
+		boolean allSucceeded = runTests(testCases);
+		System.out.println(dateFormat.format(date)+" Finished Testing "+(allSucceeded?"without failures":"with failures"));
+		if(!allSucceeded) {
+			System.exit(1);
+		}
 	}
 
-	private static void runTests(ArrayList<TestCase> testCases) {
+	private static boolean runTests(ArrayList<TestCase> testCases) {
+		boolean allSucceeded = true;
 		
 		for (TestCase testCase : testCases) {
 			Date date = new Date();
@@ -53,14 +54,16 @@ public class Testing {
 			TestResult res = testCase.runTest();
 			long exEnd = System.nanoTime();
 			long exTot = (exEnd-exStart)/1000/1000;
-			
+			if(res.getError()!=null) {
+				allSucceeded=false;
+			}
 			String resString = printTestResult(dateFormat, testCase, res, exTot);
-			// TODO improve \/
 			Variables.resolveTestCaseCustomVariables(testCases, testCase, res);
 			if(Settings.logFilePath!=null) {
 				Helpers.writeTestCaseResult(Settings.logFilePath, testCase, res, resString);
 			}
 		}
+		return allSucceeded;
 	}
 
 	private static String printTestResult(DateFormat dateFormat, TestCase testCase, TestResult res, long exTot) {
