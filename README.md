@@ -1,12 +1,38 @@
 # automated-api-testing
-Set up API / web test cases with ease!
+AAT lets you define HTTP API testcases through convenient JSON files.
+It supports:
+- Loading request bodies from a file
+- Sending custom headers
+- Checking the response body for a string
+- Checking the response code
+- Variables (more on this below)
 
-https://oz-web.com/apitesting/api.php
-
-work in progress . . .
+Variables allow you to save values from prior requests and use them in subsequent requests.
+They can be defined in the test json (such as declaring the base URL for your tests only at one place) or be set dynamically, by extracting it from the response body (using regular expressions) or the response headers. This allows for complex test flows as well as achieve statefulness during each test case.
 
 # Usage
 ## Defining test cases
+
+
+### Minimal test case
+A minimal test case requires the following values:
+```
+{
+   "tests":[
+      {
+         "name":"check200",
+         "call":"https://zgheb.com",
+         "method":"GET",
+         "responseCode":200
+      }
+   ]
+}
+```
+This test cases performs a HTTP GET on zgheb.com and checks if the response code is 200.
+
+
+## TODO all other flags
+
 ```
 {
    "tests":[
@@ -109,7 +135,9 @@ user=user&password=%%<password>%%
 ```
 
 
-# API PHP Mockup Code
+## Mockup API
+A mockup API is hosted under https://oz-web.com/apitesting/api.php which allows you to get acquianted with AAT.
+The PHP code used is the following:
 ```php
 <?php
 	if (isset($_GET['action'])){
