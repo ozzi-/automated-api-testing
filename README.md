@@ -90,7 +90,7 @@ When verbose mode is enabled, the same test case as used above would output:
 
 ### Minimal test case
 A minimal test case requires the following values:
-```
+```json
 {
    "tests":[
       {
@@ -107,7 +107,7 @@ This test cases performs a HTTP GET on zgheb.com and checks if the response code
 
 ### Response contains
 The following test case addtionally checks if the response body contains a string:
-```
+```json
 {
    "tests":[
       {
@@ -121,7 +121,7 @@ The following test case addtionally checks if the response body contains a strin
 }
 ```
 Note: You may also provide multiple contain keywords 
-```
+```json
          . . .
 	 "responseContains": [
 	     "automating", "security"
@@ -130,7 +130,7 @@ Note: You may also provide multiple contain keywords
 ```
 ### Request body
 Request bodies are externalized in files, you may define them as following:
-```
+```json
       {
          "name":"doLogin",
          "call":"https://zgheb.com",
@@ -145,7 +145,7 @@ Note: The path defined in "body" is always relative to the location of the test 
 
 ### Headers
 Setting headers is done as following - while setting the content type header has its own shortcut:
-```
+```json
          . . . 
          "headers":[
             {
@@ -159,7 +159,7 @@ Setting headers is done as following - while setting the content type header has
 
 ### Static variables
 You may define a variable outside of the test cases as following:
-```
+```json
 {
    "tests":[
       {
@@ -179,7 +179,7 @@ You may define a variable outside of the test cases as following:
 ```
 	
 You may also declare variables for each test case:
-```
+```json
 {
    "tests":[
       {
@@ -207,7 +207,7 @@ You may also declare variables for each test case:
 You may dynamically set variables, meaning their value is extracted from a response.
 Either from the variable body, using a regexp or from a response header.
 This is extremely usefull to create test cases that need to be stateful.
-```
+```json
 {
    "tests":[
       {
@@ -241,7 +241,7 @@ They can be injected by using %%<variable name>%%.
 
 ### Proxy
 Configuring a proxy for all requests is as simple as:
-```
+```json
 {
    "tests":[
       {
@@ -259,7 +259,7 @@ Configuring a proxy for all requests is as simple as:
 ```
 ### Timeout
 When doing test cases, you may want to tweak the default timeout from 5000 ms to a specific value as such:
-```
+```json
       {
          "name":"longRunning",
          "call":"https://zgheb.com/longtask",
@@ -271,7 +271,7 @@ When doing test cases, you may want to tweak the default timeout from 5000 ms to
 	
 ### Externalizing tests
 Being able to externalize tests into files is great for reoccuring tests.
-```
+```json
 {
     "tests":[
         {
