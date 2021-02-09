@@ -343,7 +343,7 @@ The PHP code used is the following:
 ```
 
 The following test json shows all features in a practical scenario using the mock API:
-```
+```json
 {
    "tests":[
       {
