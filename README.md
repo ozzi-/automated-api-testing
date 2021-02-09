@@ -31,9 +31,30 @@ A minimal test case requires the following values:
 This test cases performs a HTTP GET on zgheb.com and checks if the response code is 200.
 
 
-## TODO all other flags
-
+### Response contains
+The following test case addtionally checks if the response body contains a string:
 ```
+{
+   "tests":[
+      {
+         "name":"check200",
+         "call":"https://zgheb.com",
+         "method":"GET",
+         "responseCode":200,
+	 "responseContains": "automating"
+      }
+   ]
+}
+```
+Note: You may also provide multiple contain keywords 
+```
+         . . .
+	 "responseContains": [
+	     "automating", "security"
+	 ]
+	 . . .
+```
+
 {
    "tests":[
       {
