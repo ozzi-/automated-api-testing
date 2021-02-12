@@ -210,8 +210,8 @@ public class TestCaseHelpers {
 	}
 
 	private static void validateMethod(int i, String method) {
-		if (!(method.equals(Keywords.HTTPGET) || method.equals(Keywords.HTTPDELETE) || method.equals(Keywords.HTTPPOST)
-				|| method.equals(Keywords.HTTPPUT))) {
+		if (!(method.equals(Keywords.HTTPGET) || method.equals(Keywords.HTTPPOST) || method.equals(Keywords.HTTPHEAD)
+				|| method.equals(Keywords.HTTPOPTIOPNS) || method.equals(Keywords.HTTPPUT) || method.equals(Keywords.HTTPDELETE) || method.equals(Keywords.HTTPTRACE))) {
 			System.err.println("Error in tests json at element nr. " + i + ". Unknown method " + method);
 		}
 	}

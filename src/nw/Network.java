@@ -70,7 +70,6 @@ public class Network {
 		int responseCode = conn.getResponseCode();
 		
 		Map<String, java.util.List<String>> headers = conn.getHeaderFields();
-
 		conn.disconnect();
 
 		return new Response(responseCode, result, headers);

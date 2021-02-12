@@ -22,10 +22,14 @@ public class Keywords {
 	public static final String KEYWORD_RESPONSE_CODE = "response code:";
 
 	public static final String HTTPGET="GET";
-	public static final String HTTPDELETE = "DELETE";
 	public static final String HTTPPOST = "POST";
+	public static final String HTTPHEAD = "HEAD";
+	public static final String HTTPOPTIOPNS = "OPTIONS";
 	public static final String HTTPPUT = "PUT";
-
+	public static final String HTTPDELETE = "DELETE";
+	public static final String HTTPTRACE = "TRACE";
+	
+	
 	public static final String PROXY = "proxy";
 	public static final String ADDRESS = "address";
 	public static final String PORT = "port";	
